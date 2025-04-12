@@ -500,12 +500,14 @@ export const updateExpertRequestStatus = async ({
 
 export type AssignExpertParams = {
   id: string;
+  title: string;
   expertRequestId: string;
   expertId: string;
 };
 
 export const assignExpertToRequest = async ({
   id,
+  title,
   expertRequestId,
   expertId,
 }: AssignExpertParams) => {
@@ -536,6 +538,7 @@ export const assignExpertToRequest = async ({
     await tx
       .update(expertRequest)
       .set({
+        title: title,
         assignedExpertsCount: currentCount + 1,
         status: 'in_progress',
         updatedAt: new Date(),
@@ -654,4 +657,22 @@ export const isExpertAssignedToChat = async ({
     .limit(1);
 
   return assignments.length > 0;
+};
+
+export type GetExpertAssignmentByIdParams = {
+  id: string;
+};
+
+export const getExpertAssignmentById = async ({
+  id,
+}: GetExpertAssignmentByIdParams) => {
+  return await db
+    .select({
+      assignment: expertAssignment,
+      request: expertRequest,
+    })
+    .from(expertAssignment)
+    .innerJoin(expertRequest, eq(expertAssignment.expertRequestId, expertRequest.id))
+    .where(eq(expertAssignment.id, id))
+    .then((res) => res[0]);
 };

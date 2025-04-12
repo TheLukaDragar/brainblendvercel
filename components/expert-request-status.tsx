@@ -36,6 +36,12 @@ export function ExpertRequestStatus({ chatId }: { chatId: string }) {
             <StatusBadge status={request.status} />
           </div>
           
+          {request.title && (
+            <div className="mb-2 text-sm font-semibold">
+              {request.title}
+            </div>
+          )}
+          
           <div className="flex items-center gap-2 text-xs text-blue-600/80 dark:text-blue-400/80">
             <div className="flex items-center gap-1">
               <UsersIcon size={12} />

@@ -1,0 +1,1 @@
+ALTER TABLE "ExpertRequest" ADD COLUMN "title" text DEFAULT 'Untitled';

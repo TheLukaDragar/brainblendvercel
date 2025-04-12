@@ -58,11 +58,12 @@ export async function POST(request: Request) {
     if (!userMessage) {
       return new Response('No user message found', { status: 400 });
     }
+    let title = 'Untitled';
 
     const chat = await getChatById({ id });
 
     if (!chat) {
-      const title = await generateTitleFromUserMessage({
+      title = await generateTitleFromUserMessage({
         message: userMessage,
       });
 
@@ -89,6 +90,8 @@ export async function POST(request: Request) {
     // If this is an expert request, create it and assign to experts
     if (isExpertRequest) {
       // Extract the question from the user message
+
+      
       const questionText = Array.isArray(userMessage.parts) 
         ? userMessage.parts.map(part => typeof part === 'string' ? part : '').join(' ')
         : typeof userMessage.parts === 'string' ? userMessage.parts : '';
@@ -99,6 +102,7 @@ export async function POST(request: Request) {
         id: expertRequestId,
         chatId: id,
         question: questionText,
+        
       });
       
       // Find all users to assign as experts (for now, assign to all users)
@@ -112,6 +116,7 @@ export async function POST(request: Request) {
         if (potentialExpert.id !== session.user.id) {
           await assignExpertToRequest({
             id: generateUUID(),
+            title: title,
             expertRequestId: expertRequestId,
             expertId: potentialExpert.id,
           });

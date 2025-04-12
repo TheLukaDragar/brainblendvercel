@@ -23,8 +23,13 @@ import {
   ShareIcon,
   TrashIcon,
 } from './icons';
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useChatVisibility } from '@/hooks/use-chat-visibility';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/utils';
+
+// Define a type for expert request statuses
+type ExpertRequestStatus = 'pending' | 'in_progress' | 'completed' | null;
 
 const PureChatItem = ({
   chat,
@@ -41,12 +46,59 @@ const PureChatItem = ({
     chatId: chat.id,
     initialVisibility: chat.visibility,
   });
+  
+  // Get expert requests for this chat to determine if it's a community chat
+  const { data: expertRequests } = useSWR<Array<any>>(
+    `/api/expert-requests?chatId=${chat.id}`,
+    fetcher
+  );
+  
+  // Determine status based on expert requests
+  const getCommunityStatus = (): ExpertRequestStatus => {
+    if (!expertRequests || expertRequests.length === 0) return null;
+    
+    // Check if all are completed
+    if (expertRequests.every(req => req.status === 'completed')) {
+      return 'completed';
+    }
+    
+    // Check if any are in progress
+    if (expertRequests.some(req => req.status === 'in_progress')) {
+      return 'in_progress';
+    }
+    
+    return 'pending';
+  };
+  
+  const communityStatus = getCommunityStatus();
+  
+  // Get color for the status indicator
+  const getStatusColor = (status: ExpertRequestStatus) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-500 shadow-yellow-500/50';
+      case 'in_progress':
+        return 'bg-blue-500 shadow-blue-500/50';
+      case 'completed':
+        return 'bg-green-500 shadow-green-500/50';
+      default:
+        return '';
+    }
+  };
 
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={isActive}>
         <Link href={`/chat/${chat.id}`} onClick={() => setOpenMobile(false)}>
-          <span>{chat.title}</span>
+          <div className="flex items-center justify-between w-full">
+            <span>{chat.title}</span>
+            {communityStatus && (
+              <div 
+                className={`h-1.5 w-1.5 rounded-full ml-2 shadow-sm ${getStatusColor(communityStatus)}`} 
+                title={`Community chat: ${communityStatus.replace('_', ' ')}`}
+              />
+            )}
+          </div>
         </Link>
       </SidebarMenuButton>
 

@@ -60,8 +60,16 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarHistory user={user} />
-        {user && <ExpertAssignments />}
+        <div className="flex flex-col h-[calc(100vh-120px)]">
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <SidebarHistory user={user} />
+          </div>
+          {user && (
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <ExpertAssignments />
+            </div>
+          )}
+        </div>
       </SidebarContent>
       <SidebarFooter>{user && <SidebarUserNav user={user} />}</SidebarFooter>
     </Sidebar>

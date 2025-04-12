@@ -156,6 +156,7 @@ export type Suggestion = InferSelectModel<typeof suggestion>;
 
 export const expertRequest = pgTable('ExpertRequest', {
   id: uuid('id').primaryKey().notNull().defaultRandom(),
+  title: text('title').default('Untitled'),
   chatId: uuid('chatId')
     .notNull()
     .references(() => chat.id),
