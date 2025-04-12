@@ -16,6 +16,8 @@ import {
   vote,
   type DBMessage,
   Chat,
+  expertRequest,
+  expertAssignment,
 } from './schema';
 import { ArtifactKind } from '@/components/artifact';
 
@@ -27,6 +29,15 @@ import { ArtifactKind } from '@/components/artifact';
 const client = postgres(process.env.POSTGRES_URL!);
 const db = drizzle(client);
 
+
+export async function getAllExperts(): Promise<Array<User>> {
+  try {
+    return await db.select().from(user);
+  } catch (error) {
+    console.error('Failed to get all experts from database');
+    throw error;
+  }
+}
 export async function getUser(email: string): Promise<Array<User>> {
   try {
     return await db.select().from(user).where(eq(user.email, email));
@@ -415,3 +426,232 @@ export async function updateChatVisiblityById({
     throw error;
   }
 }
+
+export type SaveExpertRequestParams = {
+  id: string;
+  chatId: string;
+  question: string;
+};
+
+export const saveExpertRequest = async ({
+  id,
+  chatId,
+  question,
+}: SaveExpertRequestParams) => {
+  return await db
+    .insert(expertRequest)
+    .values({
+      id,
+      chatId,
+      question,
+      status: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .returning()
+    .then((res) => res[0]);
+};
+
+export type GetExpertRequestParams = {
+  id: string;
+};
+
+export const getExpertRequestById = async ({ id }: GetExpertRequestParams) => {
+  return await db
+    .select()
+    .from(expertRequest)
+    .where(eq(expertRequest.id, id))
+    .then((res) => res[0]);
+};
+
+export type GetExpertRequestsByChatParams = {
+  chatId: string;
+};
+
+export const getExpertRequestsByChat = async ({
+  chatId,
+}: GetExpertRequestsByChatParams) => {
+  return await db
+    .select()
+    .from(expertRequest)
+    .where(eq(expertRequest.chatId, chatId))
+    .orderBy(desc(expertRequest.createdAt));
+};
+
+export type UpdateExpertRequestStatusParams = {
+  id: string;
+  status: 'pending' | 'in_progress' | 'completed';
+};
+
+export const updateExpertRequestStatus = async ({
+  id,
+  status,
+}: UpdateExpertRequestStatusParams) => {
+  return await db
+    .update(expertRequest)
+    .set({
+      status,
+      updatedAt: new Date(),
+    })
+    .where(eq(expertRequest.id, id))
+    .returning()
+    .then((res) => res[0]);
+};
+
+export type AssignExpertParams = {
+  id: string;
+  expertRequestId: string;
+  expertId: string;
+};
+
+export const assignExpertToRequest = async ({
+  id,
+  expertRequestId,
+  expertId,
+}: AssignExpertParams) => {
+  // First, create the assignment
+  const assignment = await db
+    .insert(expertAssignment)
+    .values({
+      id,
+      expertRequestId,
+      expertId,
+      status: 'assigned',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .returning()
+    .then((res) => res[0]);
+  
+  // Then, update the expert request's count
+  await db.transaction(async (tx) => {
+    const currentRequest = await tx
+      .select({ count: expertRequest.assignedExpertsCount })
+      .from(expertRequest)
+      .where(eq(expertRequest.id, expertRequestId))
+      .then((res) => res[0]);
+    
+    const currentCount = currentRequest?.count || 0;
+    
+    await tx
+      .update(expertRequest)
+      .set({
+        assignedExpertsCount: currentCount + 1,
+        status: 'in_progress',
+        updatedAt: new Date(),
+      })
+      .where(eq(expertRequest.id, expertRequestId));
+  });
+  
+  return assignment;
+};
+
+export type UpdateExpertAssignmentParams = {
+  id: string;
+  status: 'assigned' | 'working' | 'submitted' | 'accepted' | 'rejected';
+  response?: string;
+};
+
+export const updateExpertAssignment = async ({
+  id,
+  status,
+  response,
+}: UpdateExpertAssignmentParams) => {
+  const updateData: any = {
+    status,
+    updatedAt: new Date(),
+  };
+  
+  if (response !== undefined) {
+    updateData.response = response;
+  }
+  
+  return await db
+    .update(expertAssignment)
+    .set(updateData)
+    .where(eq(expertAssignment.id, id))
+    .returning()
+    .then((res) => res[0]);
+};
+
+export type RateExpertResponseParams = {
+  id: string;
+  rating: '1' | '2' | '3' | '4' | '5';
+};
+
+export const rateExpertResponse = async ({
+  id,
+  rating,
+}: RateExpertResponseParams) => {
+  return await db
+    .update(expertAssignment)
+    .set({
+      rating,
+      updatedAt: new Date(),
+    })
+    .where(eq(expertAssignment.id, id))
+    .returning()
+    .then((res) => res[0]);
+};
+
+export type GetExpertAssignmentsParams = {
+  expertRequestId: string;
+};
+
+export const getExpertAssignments = async ({
+  expertRequestId,
+}: GetExpertAssignmentsParams) => {
+  return await db
+    .select({
+      assignment: expertAssignment,
+      expert: user,
+    })
+    .from(expertAssignment)
+    .innerJoin(user, eq(expertAssignment.expertId, user.id))
+    .where(eq(expertAssignment.expertRequestId, expertRequestId))
+    .orderBy(desc(expertAssignment.createdAt));
+};
+
+export type GetExpertAssignmentsByExpertParams = {
+  expertId: string;
+};
+
+export const getExpertAssignmentsByExpert = async ({
+  expertId,
+}: GetExpertAssignmentsByExpertParams) => {
+  return await db
+    .select({
+      assignment: expertAssignment,
+      request: expertRequest,
+    })
+    .from(expertAssignment)
+    .innerJoin(expertRequest, eq(expertAssignment.expertRequestId, expertRequest.id))
+    .where(eq(expertAssignment.expertId, expertId))
+    .orderBy(desc(expertAssignment.createdAt));
+};
+
+export type IsExpertAssignedToChatParams = {
+  expertId: string;
+  chatId: string;
+};
+
+export const isExpertAssignedToChat = async ({
+  expertId,
+  chatId,
+}: IsExpertAssignedToChatParams) => {
+  const assignments = await db
+    .select({
+      assignment: expertAssignment,
+    })
+    .from(expertAssignment)
+    .innerJoin(expertRequest, eq(expertAssignment.expertRequestId, expertRequest.id))
+    .where(
+      and(
+        eq(expertAssignment.expertId, expertId),
+        eq(expertRequest.chatId, chatId)
+      )
+    )
+    .limit(1);
+
+  return assignments.length > 0;
+};

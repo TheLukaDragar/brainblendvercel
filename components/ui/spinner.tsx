@@ -1,37 +1,27 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+'use client';
+
+import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const spinnerVariants = cva(
-  'inline-block animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]',
-  {
-    variants: {
-      size: {
-        small: 'h-4 w-4 border-2',
-        medium: 'h-6 w-6',
-        large: 'h-8 w-8',
-      },
-    },
-    defaultVariants: {
-      size: 'medium',
-    },
-  },
-);
-
-export interface SpinnerProps extends VariantProps<typeof spinnerVariants> {
-  className?: string;
+interface SpinnerProps extends React.HTMLAttributes<HTMLDivElement> {
+  size?: 'sm' | 'md' | 'lg';
 }
 
-export function Spinner({ size, className }: SpinnerProps) {
+export function Spinner({ size = 'md', className, ...props }: SpinnerProps) {
+  const sizeMap = {
+    sm: 'w-4 h-4',
+    md: 'w-6 h-6',
+    lg: 'w-8 h-8',
+  };
+
   return (
     <div
-      className={cn(spinnerVariants({ size }), className)}
       role="status"
-      aria-live="polite"
-      aria-label="Loading..."
+      className={cn('flex items-center justify-center', className)}
+      {...props}
     >
-      <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
-        Loading...
-      </span>
+      <Loader2 className={`${sizeMap[size]} animate-spin text-blue-500`} />
+      <span className="sr-only">Loading...</span>
     </div>
   );
 } 

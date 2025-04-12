@@ -15,6 +15,8 @@ import { useArtifactSelector } from '@/hooks/use-artifact';
 import { toast } from 'sonner';
 import { unstable_serialize } from 'swr/infinite';
 import { getChatHistoryPaginationKey } from './sidebar-history';
+import { ExpertRequestStatus } from './expert-request-status';
+import { ExpertResponse } from './expert-response';
 
 export function Chat({
   id,
@@ -31,6 +33,11 @@ export function Chat({
 }) {
   const { mutate } = useSWRConfig();
 
+  const [attachments, setAttachments] = useState<Array<Attachment>>([]);
+  const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
+  const [expertMode, setExpertMode] = useState(false);
+  const [animating, setAnimating] = useState(false);
+
   const {
     messages,
     setMessages,
@@ -43,7 +50,7 @@ export function Chat({
     reload,
   } = useChat({
     id,
-    body: { id, selectedChatModel: selectedChatModel },
+    body: { id, selectedChatModel: selectedChatModel, isExpertRequest: expertMode },
     initialMessages,
     experimental_throttle: 100,
     sendExtraMessageFields: true,
@@ -60,11 +67,6 @@ export function Chat({
     messages.length >= 2 ? `/api/vote?chatId=${id}` : null,
     fetcher,
   );
-
-  const [attachments, setAttachments] = useState<Array<Attachment>>([]);
-  const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
-  const [expertMode, setExpertMode] = useState(false);
-  const [animating, setAnimating] = useState(false);
 
   const handleExpertModeToggle = () => {
     setAnimating(true);
@@ -102,6 +104,8 @@ export function Chat({
             </div>
           )}
         </div>
+
+        <ExpertRequestStatus chatId={id} />
 
         <Messages
           chatId={id}
@@ -189,6 +193,8 @@ export function Chat({
         votes={votes}
         isReadonly={isReadonly}
       />
+
+      <ExpertResponse chatId={id} />
     </>
   );
 }

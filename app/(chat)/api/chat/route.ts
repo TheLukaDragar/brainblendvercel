@@ -10,8 +10,13 @@ import { systemPrompt } from '@/lib/ai/prompts';
 import {
   deleteChatById,
   getChatById,
+  getExpertRequestsByChat,
   saveChat,
   saveMessages,
+  saveExpertRequest,
+  assignExpertToRequest,
+  getUser,
+  getAllExperts,
 } from '@/lib/db/queries';
 import {
   generateUUID,
@@ -34,10 +39,12 @@ export async function POST(request: Request) {
       id,
       messages,
       selectedChatModel,
+      isExpertRequest,
     }: {
       id: string;
       messages: Array<UIMessage>;
       selectedChatModel: string;
+      isExpertRequest: boolean;
     } = await request.json();
 
     const session = await auth();
@@ -79,6 +86,67 @@ export async function POST(request: Request) {
       ],
     });
 
+    // If this is an expert request, create it and assign to experts
+    if (isExpertRequest) {
+      // Extract the question from the user message
+      const questionText = Array.isArray(userMessage.parts) 
+        ? userMessage.parts.map(part => typeof part === 'string' ? part : '').join(' ')
+        : typeof userMessage.parts === 'string' ? userMessage.parts : '';
+      
+      // Create the expert request
+      const expertRequestId = generateUUID();
+      const expertRequest = await saveExpertRequest({
+        id: expertRequestId,
+        chatId: id,
+        question: questionText,
+      });
+      
+      // Find all users to assign as experts (for now, assign to all users)
+      // In a real implementation, you would filter users based on expertise
+      //currently all users are experts assigned to the request 
+      const allUsers = await getAllExperts();
+      
+      // Assign the request to all users (excluding the requesting user)
+      for (const potentialExpert of allUsers) {
+        console.log('potentialExpert for assignemnt', potentialExpert);
+        if (potentialExpert.id !== session.user.id) {
+          await assignExpertToRequest({
+            id: generateUUID(),
+            expertRequestId: expertRequestId,
+            expertId: potentialExpert.id,
+          });
+        }
+      }
+      
+      // Return a response that indicates an expert request was created
+      return createDataStreamResponse({
+        execute: (dataStream) => {
+          const expertResponseMessage = {
+            role: 'assistant' as const,
+            content: `Your question has been sent to our community experts. Experts assigned: ${expertRequest.assignedExpertsCount || 0}. You'll be notified when they respond.`,
+          };
+          
+          const result = streamText({
+            model: myProvider.languageModel(selectedChatModel),
+            system: systemPrompt({ selectedChatModel }),
+            messages: [...messages, expertResponseMessage],
+            maxSteps: 1,
+            experimental_transform: smoothStream({ chunking: 'word' }),
+            experimental_generateMessageId: generateUUID,
+          });
+
+          result.consumeStream();
+          result.mergeIntoDataStream(dataStream, {
+            sendReasoning: false,
+          });
+        },
+        onError: () => {
+          return 'Oops, an error occurred while sending your question to experts!';
+        },
+      });
+    }
+
+    // Regular AI response flow
     return createDataStreamResponse({
       execute: (dataStream) => {
         const result = streamText({

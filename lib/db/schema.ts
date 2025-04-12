@@ -9,6 +9,7 @@ import {
   primaryKey,
   foreignKey,
   boolean,
+  integer,
 } from 'drizzle-orm/pg-core';
 
 export const user = pgTable('User', {
@@ -152,3 +153,38 @@ export const suggestion = pgTable(
 );
 
 export type Suggestion = InferSelectModel<typeof suggestion>;
+
+export const expertRequest = pgTable('ExpertRequest', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  chatId: uuid('chatId')
+    .notNull()
+    .references(() => chat.id),
+  question: text('question').notNull(),
+  status: varchar('status', { enum: ['pending', 'in_progress', 'completed'] })
+    .notNull()
+    .default('pending'),
+  createdAt: timestamp('createdAt').notNull(),
+  updatedAt: timestamp('updatedAt').notNull(),
+  assignedExpertsCount: integer('assignedExpertsCount'),
+});
+
+export type ExpertRequest = InferSelectModel<typeof expertRequest>;
+
+export const expertAssignment = pgTable('ExpertAssignment', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  expertRequestId: uuid('expertRequestId')
+    .notNull()
+    .references(() => expertRequest.id),
+  expertId: uuid('expertId')
+    .notNull()
+    .references(() => user.id),
+  status: varchar('status', { enum: ['assigned', 'working', 'submitted', 'accepted', 'rejected'] })
+    .notNull()
+    .default('assigned'),
+  response: text('response'),
+  rating: varchar('rating', { enum: ['1', '2', '3', '4', '5'] }),
+  createdAt: timestamp('createdAt').notNull(),
+  updatedAt: timestamp('updatedAt').notNull(),
+});
+
+export type ExpertAssignment = InferSelectModel<typeof expertAssignment>;
