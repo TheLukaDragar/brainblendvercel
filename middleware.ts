@@ -5,5 +5,11 @@ import { authConfig } from '@/app/(auth)/auth.config';
 export default NextAuth(authConfig).auth;
 
 export const config = {
-  matcher: ['/', '/:id', '/api/:path*', '/login', '/register'],
+  matcher: [
+    '/', 
+    '/:id', 
+    '/api/((?!generate-tags).*)',  // Match all API routes except generate-tags
+    '/login', 
+    '/register'
+  ],
 };

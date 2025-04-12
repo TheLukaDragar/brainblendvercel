@@ -1,0 +1,1 @@
+ALTER TABLE "User" ADD COLUMN "expertiseTags" json DEFAULT '[]'::json;

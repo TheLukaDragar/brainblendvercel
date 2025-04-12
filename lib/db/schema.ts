@@ -16,6 +16,7 @@ export const user = pgTable('User', {
   email: varchar('email', { length: 64 }).notNull(),
   password: varchar('password', { length: 64 }),
   expertise: text('expertise'),
+  expertiseTags: json('expertiseTags').$type<string[]>().default([]),
 });
 
 export type User = InferSelectModel<typeof user>;

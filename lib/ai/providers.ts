@@ -40,6 +40,7 @@ export const myProvider = isTestEnvironment
         'chat-model-reasoning': local_nemotron,
         'title-model': local_nemotron,
         'artifact-model': local_nemotron,
+        'tag-model': local_nemotron,
       },
     })
   : customProvider({
@@ -57,10 +58,11 @@ export const myProvider = isTestEnvironment
       // },
 
       languageModels: {
-        'chat-model': local_nemotron,
-        'chat-model-reasoning': local_nemotron,
-        'title-model': local_nemotron,
-        'artifact-model': local_nemotron,
+        'chat-model': xai('grok-2-1212'),
+        'chat-model-reasoning': xai('grok-3-mini-beta'),
+        'title-model': xai('grok-2-1212'),
+        'artifact-model': xai('grok-2-1212'),
+        'tag-model': xai('grok-2-1212'),
       },
 
     });
