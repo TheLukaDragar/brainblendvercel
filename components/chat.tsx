@@ -63,16 +63,45 @@ export function Chat({
 
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
+  const [expertMode, setExpertMode] = useState(false);
+  const [animating, setAnimating] = useState(false);
+
+  const handleExpertModeToggle = () => {
+    setAnimating(true);
+    setTimeout(() => {
+      setExpertMode(!expertMode);
+      setTimeout(() => {
+        setAnimating(false);
+      }, 300);
+    }, 150);
+    toast.success(expertMode ? 'AI mode activated' : 'Community mode activated');
+  };
 
   return (
     <>
       <div className="flex flex-col min-w-0 h-dvh bg-background">
-        <ChatHeader
-          chatId={id}
-          selectedModelId={selectedChatModel}
-          selectedVisibilityType={selectedVisibilityType}
-          isReadonly={isReadonly}
-        />
+        <div className="flex items-center">
+          <ChatHeader
+            chatId={id}
+            selectedModelId={selectedChatModel}
+            selectedVisibilityType={selectedVisibilityType}
+            isReadonly={isReadonly}
+          />
+          {expertMode && (
+            <div className="bg-blue-500 text-white px-3 py-1 text-sm font-medium rounded-lg ml-3 flex items-center gap-1.5 shadow-md animate-in fade-in slide-in-from-right-5 duration-300 relative">
+              <div className="absolute inset-0 rounded-lg bg-blue-400 opacity-50 blur-sm -z-10"></div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="w-4 h-4 animate-pulse"
+              >
+                <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z" />
+              </svg>
+              Community Mode
+            </div>
+          )}
+        </div>
 
         <Messages
           chatId={id}
@@ -83,23 +112,63 @@ export function Chat({
           reload={reload}
           isReadonly={isReadonly}
           isArtifactVisible={isArtifactVisible}
+          append={append}
+          expertMode={expertMode}
         />
 
         <form className="flex mx-auto px-4 bg-background pb-4 md:pb-6 gap-2 w-full md:max-w-3xl">
           {!isReadonly && (
-            <MultimodalInput
-              chatId={id}
-              input={input}
-              setInput={setInput}
-              handleSubmit={handleSubmit}
-              status={status}
-              stop={stop}
-              attachments={attachments}
-              setAttachments={setAttachments}
-              messages={messages}
-              setMessages={setMessages}
-              append={append}
-            />
+            <>
+              <button
+                type="button"
+                onClick={handleExpertModeToggle}
+                className={`p-2 rounded-full relative overflow-hidden ${
+                  expertMode ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
+                } focus:outline-none transition-colors`}
+                title={expertMode ? "Switch to AI" : "Ask community"}
+                disabled={animating}
+              >
+                <div className={`relative w-5 h-5 ${animating ? 'animate-pulse' : ''}`}>
+                  {/* AI icon */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className={`w-5 h-5 absolute top-0 left-0 transition-opacity duration-300 ${
+                      expertMode ? 'opacity-0' : 'opacity-100'
+                    } ${animating ? 'scale-110' : 'scale-100'} transition-transform`}
+                  >
+                    <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2M7.5 13A2.5 2.5 0 0 0 5 15.5A2.5 2.5 0 0 0 7.5 18a2.5 2.5 0 0 0 2.5-2.5A2.5 2.5 0 0 0 7.5 13m9 0a2.5 2.5 0 0 0-2.5 2.5a2.5 2.5 0 0 0 2.5 2.5a2.5 2.5 0 0 0 2.5-2.5a2.5 2.5 0 0 0-2.5-2.5z" />
+                  </svg>
+                  
+                  {/* Multiple people icon */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className={`w-5 h-5 absolute top-0 left-0 transition-opacity duration-300 ${
+                      expertMode ? 'opacity-100' : 'opacity-0'
+                    } ${animating ? 'scale-110' : 'scale-100'} transition-transform`}
+                  >
+                    <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z" />
+                  </svg>
+                </div>
+              </button>
+              <MultimodalInput
+                chatId={id}
+                input={input}
+                setInput={setInput}
+                handleSubmit={handleSubmit}
+                status={status}
+                stop={stop}
+                attachments={attachments}
+                setAttachments={setAttachments}
+                messages={messages}
+                setMessages={setMessages}
+                append={append}
+                expertMode={expertMode}
+              />
+            </>
           )}
         </form>
       </div>

@@ -8,10 +8,11 @@ import { UseChatHelpers } from '@ai-sdk/react';
 interface SuggestedActionsProps {
   chatId: string;
   append: UseChatHelpers['append'];
+  expertMode?: boolean;
 }
 
-function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
-  const suggestedActions = [
+function PureSuggestedActions({ chatId, append, expertMode }: SuggestedActionsProps) {
+  const defaultSuggestedActions = [
     {
       title: 'What are the advantages',
       label: 'of using Next.js?',
@@ -33,6 +34,31 @@ function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
       action: 'What is the weather in San Francisco?',
     },
   ];
+
+  const communitySuggestedActions = [
+    {
+      title: 'I need help with',
+      label: 'a React performance issue',
+      action: 'I need help with a React performance issue where my app gets slower after re-renders. Any suggestions from the community?',
+    },
+    {
+      title: 'Looking for advice on',
+      label: 'learning machine learning',
+      action: 'Looking for advice on the best resources for learning machine learning as a beginner. Any recommendations from the community?',
+    },
+    {
+      title: 'What is your opinion on',
+      label: 'the future of web development?',
+      action: 'What is your opinion on the future of web development? Which technologies should I focus on learning in 2024?',
+    },
+    {
+      title: 'Can someone explain',
+      label: 'how to use GitHub Actions?',
+      action: 'Can someone explain how to set up GitHub Actions for continuous deployment of a Next.js app to Vercel?',
+    },
+  ];
+
+  const suggestedActions = expertMode ? communitySuggestedActions : defaultSuggestedActions;
 
   return (
     <div

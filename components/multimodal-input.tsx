@@ -23,6 +23,7 @@ import { Textarea } from './ui/textarea';
 import { SuggestedActions } from './suggested-actions';
 import equal from 'fast-deep-equal';
 import type { UseChatHelpers } from '@ai-sdk/react';
+import { generateUUID } from '@/lib/utils';
 
 function PureMultimodalInput({
   chatId,
@@ -37,6 +38,7 @@ function PureMultimodalInput({
   append,
   handleSubmit,
   className,
+  expertMode,
 }: {
   chatId: string;
   input: UseChatHelpers['input'];
@@ -50,6 +52,7 @@ function PureMultimodalInput({
   append: UseChatHelpers['append'];
   handleSubmit: UseChatHelpers['handleSubmit'];
   className?: string;
+  expertMode?: boolean;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -124,6 +127,8 @@ function PureMultimodalInput({
     setLocalStorageInput,
     width,
     chatId,
+    expertMode,
+    append,
   ]);
 
   const uploadFile = async (file: File) => {
@@ -181,12 +186,6 @@ function PureMultimodalInput({
 
   return (
     <div className="relative w-full flex flex-col gap-4">
-      {messages.length === 0 &&
-        attachments.length === 0 &&
-        uploadQueue.length === 0 && (
-          <SuggestedActions append={append} chatId={chatId} />
-        )}
-
       <input
         type="file"
         className="fixed -top-4 -left-4 size-0.5 opacity-0 pointer-events-none"
@@ -222,11 +221,12 @@ function PureMultimodalInput({
       <Textarea
         data-testid="multimodal-input"
         ref={textareaRef}
-        placeholder="Send a message..."
+        placeholder={expertMode ? "Ask community..." : "Send a message..."}
         value={input}
         onChange={handleInput}
         className={cx(
           'min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted pb-10 dark:border-zinc-700',
+          expertMode ? 'border-blue-500' : '',
           className,
         )}
         rows={2}
@@ -260,6 +260,7 @@ function PureMultimodalInput({
             input={input}
             submitForm={submitForm}
             uploadQueue={uploadQueue}
+            expertMode={expertMode}
           />
         )}
       </div>
@@ -272,6 +273,7 @@ export const MultimodalInput = memo(
   (prevProps, nextProps) => {
     if (prevProps.input !== nextProps.input) return false;
     if (prevProps.status !== nextProps.status) return false;
+    if (prevProps.expertMode !== nextProps.expertMode) return false;
     if (!equal(prevProps.attachments, nextProps.attachments)) return false;
 
     return true;
@@ -331,15 +333,19 @@ function PureSendButton({
   submitForm,
   input,
   uploadQueue,
+  expertMode,
 }: {
   submitForm: () => void;
   input: string;
   uploadQueue: Array<string>;
+  expertMode?: boolean;
 }) {
   return (
     <Button
       data-testid="send-button"
-      className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
+      className={`rounded-full p-1.5 h-fit border ${
+        expertMode ? 'bg-blue-500 border-blue-500 hover:bg-blue-600' : 'dark:border-zinc-600'
+      }`}
       onClick={(event) => {
         event.preventDefault();
         submitForm();
@@ -355,5 +361,6 @@ const SendButton = memo(PureSendButton, (prevProps, nextProps) => {
   if (prevProps.uploadQueue.length !== nextProps.uploadQueue.length)
     return false;
   if (prevProps.input !== nextProps.input) return false;
+  if (prevProps.expertMode !== nextProps.expertMode) return false;
   return true;
 });
