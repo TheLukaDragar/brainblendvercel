@@ -64,6 +64,27 @@
       "when": 1744489104934,
       "tag": "0008_shocking_fat_cobra",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1744495358833,
+      "tag": "0009_motionless_triathlon",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1744498083625,
+      "tag": "0010_free_wendigo",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1744498336948,
+      "tag": "0011_pretty_machine_man",
+      "breakpoints": true
     }
   ]
 }

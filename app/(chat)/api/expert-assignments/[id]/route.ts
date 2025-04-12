@@ -3,7 +3,7 @@ import { updateExpertAssignment } from '@/lib/db/queries';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -20,9 +20,12 @@ export async function PATCH(
       return new Response('Invalid status', { status: 400 });
     }
 
+    // Await the params before using them
+    const { id } = await params;
+
     // Update the assignment
     const updatedAssignment = await updateExpertAssignment({
-      id: params.id,
+      id,
       status,
       response,
     });

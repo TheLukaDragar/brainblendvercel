@@ -1,0 +1,1 @@
+ALTER TABLE "ExpertRequest" DROP COLUMN IF EXISTS "tags";
