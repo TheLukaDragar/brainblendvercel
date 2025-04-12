@@ -14,6 +14,7 @@ export default function Page() {
   const router = useRouter();
 
   const [email, setEmail] = useState('');
+  const [expertise, setExpertise] = useState('');
   const [isSuccessful, setIsSuccessful] = useState(false);
 
   const [state, formAction] = useActionState<RegisterActionState, FormData>(
@@ -43,19 +44,37 @@ export default function Page() {
 
   const handleSubmit = (formData: FormData) => {
     setEmail(formData.get('email') as string);
+    setExpertise(formData.get('expertise') as string);
     formAction(formData);
   };
 
   return (
     <div className="flex h-dvh w-screen items-start pt-12 md:pt-0 md:items-center justify-center bg-background">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl gap-12 flex flex-col">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl gap-8 flex flex-col">
         <div className="flex flex-col items-center justify-center gap-2 px-4 text-center sm:px-16">
-          <h3 className="text-xl font-semibold dark:text-zinc-50">Sign Up</h3>
+          <h3 className="text-2xl font-semibold dark:text-zinc-50">Join Brain Blend</h3>
           <p className="text-sm text-gray-500 dark:text-zinc-400">
-            Create an account with your email and password
+            Create an account to start your personalized AI journey
           </p>
         </div>
-        <AuthForm action={handleSubmit} defaultEmail={email}>
+        
+        <div className="flex flex-col px-4 sm:px-16">
+          <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-lg mb-6">
+            <h4 className="text-sm font-medium text-blue-700 dark:text-blue-400 mb-1">
+              Tailored Experience
+            </h4>
+            <p className="text-xs text-blue-600 dark:text-blue-300">
+              Tell us about your expertise so we can personalize your experience and suggest relevant content. We'll use this to generate tags that match your skills.
+            </p>
+          </div>
+        </div>
+
+        <AuthForm 
+          action={handleSubmit} 
+          defaultEmail={email} 
+          isRegistration={true}
+          defaultExpertise={expertise}
+        >
           <SubmitButton isSuccessful={isSuccessful}>Sign Up</SubmitButton>
           <p className="text-center text-sm text-gray-600 mt-4 dark:text-zinc-400">
             {'Already have an account? '}
@@ -72,3 +91,5 @@ export default function Page() {
     </div>
   );
 }
+
+

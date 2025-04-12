@@ -9,6 +9,7 @@ import { signIn } from './auth';
 const authFormSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
+  expertise: z.string().optional(),
 });
 
 export interface LoginActionState {
@@ -59,6 +60,7 @@ export const register = async (
     const validatedData = authFormSchema.parse({
       email: formData.get('email'),
       password: formData.get('password'),
+      expertise: formData.get('expertise') || '',
     });
 
     const [user] = await getUser(validatedData.email);
@@ -66,7 +68,7 @@ export const register = async (
     if (user) {
       return { status: 'user_exists' } as RegisterActionState;
     }
-    await createUser(validatedData.email, validatedData.password);
+    await createUser(validatedData.email, validatedData.password, validatedData.expertise);
     await signIn('credentials', {
       email: validatedData.email,
       password: validatedData.password,

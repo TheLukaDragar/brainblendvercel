@@ -60,3 +60,239 @@ pnpm dev
 ```
 
 Your app template should now be running on [localhost:3000](http://localhost:3000).
+
+## Contributing
+
+We welcome contributions to Brain Blend! This guide will help you understand the project structure and get started with development.
+
+### Project Structure
+
+The codebase is organized as follows:
+
+- `/app` - Next.js App Router routes and pages
+  - `/(auth)` - Authentication-related pages (login, register)
+  - `/(chat)` - Chat interface and functionality
+- `/components` - Reusable React components
+  - `/ui` - UI components (buttons, inputs, etc.)
+- `/lib` - Utility functions and configurations
+  - `/db` - Database schema, queries, and migrations
+
+### Database Usage
+
+We use Postgres with Drizzle ORM for database operations. The database schema is defined in `/lib/db/schema.ts`. Here's an overview of the main tables:
+
+- `User` - User information including authentication and expertise
+- `Chat` - Chat sessions
+- `Message_v2` - Chat messages with support for rich content
+
+#### Database Commands
+
+Here are the key commands for working with the database:
+
+```bash
+# Generate a migration based on schema changes
+npm run db:generate
+
+# Apply migrations to your database
+npm run db:migrate
+
+# View your database with a visual interface
+npm run db:studio
+
+# Push schema changes directly to the database (use with caution)
+npm run db:push
+
+# Pull the database schema
+npm run db:pull
+
+# Check for schema drift
+npm run db:check
+```
+
+### Development Workflow
+
+1. Make changes to the database schema in `/lib/db/schema.ts`
+2. Generate a migration using `npm run db:generate`
+3. Apply the migration with `npm run db:migrate`
+4. Update the related queries in `/lib/db/queries.ts`
+5. Use the updated schema and queries in your components and routes
+
+### Authentication
+
+The authentication system uses NextAuth.js with a custom credentials provider. Authentication-related files:
+
+- `/app/(auth)/actions.ts` - Server actions for login and registration
+- `/app/(auth)/auth.ts` - NextAuth configuration
+- `/components/auth-form.tsx` - Reusable authentication form component
+
+### Making Changes
+
+When contributing, please:
+
+1. Fork the repository and create a feature branch
+2. Make your changes following the existing code style
+3. Add appropriate tests for your changes
+4. Update documentation as needed
+5. Submit a pull request with a clear description of the changes
+
+For any questions or issues, please open an issue on GitHub.
+
+### Example: Adding a User Expertise Field
+
+This example demonstrates the process of adding a new field to the user registration system:
+
+#### 1. Update the Database Schema
+
+First, modify `lib/db/schema.ts` to include the new field:
+
+```typescript
+export const user = pgTable('User', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  email: varchar('email', { length: 64 }).notNull(),
+  password: varchar('password', { length: 64 }),
+  expertise: text('expertise'), // Add the new field
+});
+```
+
+#### 2. Update Database Queries
+
+Modify the `createUser` function in `lib/db/queries.ts` to accept and store the new field:
+
+```typescript
+export async function createUser(email: string, password: string, expertise?: string) {
+  const salt = genSaltSync(10);
+  const hash = hashSync(password, salt);
+
+  try {
+    return await db.insert(user).values({ email, password: hash, expertise });
+  } catch (error) {
+    console.error('Failed to create user in database');
+    throw error;
+  }
+}
+```
+
+#### 3. Update Form Component
+
+Modify the `AuthForm` component in `components/auth-form.tsx` to include the new field:
+
+```typescript
+export function AuthForm({
+  action,
+  children,
+  defaultEmail = '',
+  isRegistration = false, // Add flag for registration form
+  defaultExpertise = '',
+}: {
+  action: NonNullable<string | ((formData: FormData) => void | Promise<void>) | undefined>;
+  children: React.ReactNode;
+  defaultEmail?: string;
+  isRegistration?: boolean;
+  defaultExpertise?: string;
+}) {
+  return (
+    <Form action={action} className="flex flex-col gap-4 px-4 sm:px-16">
+      {/* Existing email and password fields */}
+      
+      {isRegistration && (
+        <div className="flex flex-col gap-2">
+          <Label
+            htmlFor="expertise"
+            className="text-zinc-600 font-normal dark:text-zinc-400"
+          >
+            Your Expertise
+          </Label>
+          <Textarea
+            id="expertise"
+            name="expertise"
+            className="bg-muted text-md md:text-sm resize-none min-h-[100px]"
+            placeholder="Describe your expertise, skills, or areas of interest..."
+            defaultValue={defaultExpertise}
+          />
+        </div>
+      )}
+
+      {children}
+    </Form>
+  );
+}
+```
+
+#### 4. Update Action Handler
+
+Modify the registration action in `app/(auth)/actions.ts` to handle the new field:
+
+```typescript
+const authFormSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  expertise: z.string().optional(),
+});
+
+export const register = async (
+  _: RegisterActionState,
+  formData: FormData,
+): Promise<RegisterActionState> => {
+  try {
+    const validatedData = authFormSchema.parse({
+      email: formData.get('email'),
+      password: formData.get('password'),
+      expertise: formData.get('expertise') || '',
+    });
+
+    // Existing user check logic...
+    
+    await createUser(validatedData.email, validatedData.password, validatedData.expertise);
+    
+    // Authentication logic...
+
+    return { status: 'success' };
+  } catch (error) {
+    // Error handling...
+  }
+};
+```
+
+#### 5. Update Registration Page
+
+Update the registration page in `app/(auth)/register/page.tsx` to use the new field:
+
+```typescript
+export default function Page() {
+  // Existing state and hooks...
+  const [expertise, setExpertise] = useState('');
+  
+  const handleSubmit = (formData: FormData) => {
+    setEmail(formData.get('email') as string);
+    setExpertise(formData.get('expertise') as string);
+    formAction(formData);
+  };
+
+  return (
+    <div className="flex h-dvh w-screen items-center justify-center">
+      {/* Existing UI elements */}
+      
+      <AuthForm 
+        action={handleSubmit} 
+        defaultEmail={email} 
+        isRegistration={true}
+        defaultExpertise={expertise}
+      >
+        {/* Form content */}
+      </AuthForm>
+    </div>
+  );
+}
+```
+
+#### 6. Generate and Run Migrations
+
+```bash
+# Generate a migration for the schema changes
+npm run db:generate
+
+# Apply the migration to your database
+npm run db:migrate
+```
+
+This example demonstrates a complete workflow for adding a new feature that spans the database schema, queries, UI components, and server actions.
