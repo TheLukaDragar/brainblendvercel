@@ -163,3 +163,27 @@ export function getTrailingMessageId({
 
   return trailingMessage.id;
 }
+
+export function formatDate(dateString: string | Date) {
+  const date = new Date(dateString);
+  
+  // If less than 24 hours ago, show relative time
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = diffMs / (1000 * 60 * 60);
+  
+  if (diffHours < 24) {
+    if (diffHours < 1) {
+      const diffMinutes = Math.floor(diffMs / (1000 * 60));
+      return `${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''} ago`;
+    }
+    return `${Math.floor(diffHours)} hour${Math.floor(diffHours) !== 1 ? 's' : ''} ago`;
+  }
+  
+  // Otherwise show date
+  return date.toLocaleDateString(undefined, { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  });
+}

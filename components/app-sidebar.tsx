@@ -18,6 +18,7 @@ import {
 import Link from 'next/link';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { ExpertAssignments } from './expert-assignments';
+import { Database, Plus, Users } from 'lucide-react';
 
 export function AppSidebar({ user }: { user: User | undefined }) {
   const router = useRouter();
@@ -51,7 +52,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                     router.refresh();
                   }}
                 >
-                  <PlusIcon />
+                  <Plus className="h-5 w-5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent align="end">New Chat</TooltipContent>
@@ -61,6 +62,16 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       </SidebarHeader>
       <SidebarContent>
         <div className="flex flex-col h-[calc(100vh-120px)]">
+          <div className="px-4 py-2">
+            <Link
+              href="/dataset"
+              onClick={() => setOpenMobile(false)}
+              className="flex items-center space-x-2 px-2 py-1.5 rounded-md hover:bg-muted text-sm"
+            >
+              <Database className="h-4 w-4" />
+              <span>Community Dataset</span>
+            </Link>
+          </div>
           <div className="flex-1 min-h-0 overflow-hidden">
             <SidebarHistory user={user} />
           </div>

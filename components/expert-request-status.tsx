@@ -13,11 +13,45 @@ type ExpertRequestWithCounts = ExpertRequest & {
 
 export function ExpertRequestStatus({ chatId, isExpertRequestPending = false }: { chatId: string, isExpertRequestPending?: boolean }) {
   const [showLoadingState, setShowLoadingState] = useState(isExpertRequestPending);
+  
+  // Get the expert requests for this chat
   const { data: expertRequests, error, isLoading } = useSWR<Array<ExpertRequestWithCounts>>(
     `/api/expert-requests?chatId=${chatId}`,
     fetcher,
-    { refreshInterval: 1000 } // Refresh every second
+    { 
+      refreshInterval: 3000,
+      revalidateOnFocus: true
+    }
   );
+
+  // Get request IDs to fetch real-time counts
+  const requestIds = expertRequests 
+    ? expertRequests.map(req => req.id)
+    : [];
+
+  // Use the new API to get real-time counts for all requests
+  const { data: requestCounts, mutate: mutateCounts } = useSWR(
+    requestIds.length > 0 
+      ? `/api/expert-request-counts?requestIds=${requestIds.join(',')}` 
+      : null,
+    fetcher,
+    { 
+      refreshInterval: 2000,
+      revalidateOnFocus: true,
+      dedupingInterval: 1000
+    }
+  );
+
+  // Force refresh the counts more aggressively
+  useEffect(() => {
+    if (requestIds.length === 0) return;
+    
+    const interval = setInterval(() => {
+      mutateCounts();
+    }, 2000);
+    
+    return () => clearInterval(interval);
+  }, [mutateCounts, requestIds]);
 
   // Immediately show loading state when isExpertRequestPending changes
   useEffect(() => {
@@ -84,16 +118,22 @@ export function ExpertRequestStatus({ chatId, isExpertRequestPending = false }: 
     return null;
   }
 
-  // Ensure we have completedExpertsCount (calculate it if not provided by API)
+  // Apply real-time counts to the expert requests
   const processedRequests = expertRequests.map(request => {
-    if (request.completedExpertsCount !== undefined) {
-      return request;
+    // If we have real-time counts from the API, use them
+    if (requestCounts && requestCounts[request.id]) {
+      const counts = requestCounts[request.id];
+      return {
+        ...request,
+        assignedExpertsCount: counts.assignedCount,
+        completedExpertsCount: counts.completedCount
+      };
     }
-    // If completedExpertsCount is not provided, set a default value of 1
-    // This is a temporary solution until the API provides the correct value
+    
+    // Fallback to the original counts or default to 0
     return {
       ...request,
-      completedExpertsCount: 1  // Set to 1 to match what you're seeing in the other component
+      completedExpertsCount: request.completedExpertsCount || 0
     };
   });
 

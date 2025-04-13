@@ -172,6 +172,7 @@ export const expertRequest = pgTable('ExpertRequest', {
   createdAt: timestamp('createdAt').notNull(),
   updatedAt: timestamp('updatedAt').notNull(),
   assignedExpertsCount: integer('assignedExpertsCount'),
+  completedExpertsCount: integer('completedExpertsCount').default(0),
 });
 
 export type ExpertRequest = InferSelectModel<typeof expertRequest>;

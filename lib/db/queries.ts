@@ -30,7 +30,6 @@ import { ArtifactKind } from '@/components/artifact';
 const client = postgres(process.env.POSTGRES_URL!);
 const db = drizzle(client);
 
-
 export async function getAllExperts(): Promise<Array<User>> {
   try {
     return await db.select({
@@ -41,6 +40,7 @@ export async function getAllExperts(): Promise<Array<User>> {
       expertiseTags: user.expertiseTags,
       expertiseTagsEmbedding: user.expertiseTagsEmbedding,
       credits: user.credits,
+      xp: user.xp,
     }).from(user);
   } catch (error) {
     console.error('Failed to get all experts from database');
@@ -447,6 +447,7 @@ export type SaveExpertRequestParams = {
   chatId: string;
   question: string;
   expertiseTags?: string[];
+  title?: string;
 };
 
 export const saveExpertRequest = async ({
@@ -454,6 +455,7 @@ export const saveExpertRequest = async ({
   chatId,
   question,
   expertiseTags,
+  title,
 }: SaveExpertRequestParams) => {
   return await db
     .insert(expertRequest)
@@ -462,6 +464,7 @@ export const saveExpertRequest = async ({
       chatId,
       question,
       expertiseTags,
+      title: title || 'Untitled',
       status: 'pending',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -583,6 +586,16 @@ export const updateExpertAssignment = async ({
   try {
     // Wrap in transaction
     const result = await db.transaction(async (tx) => {
+      // Get the previous status and expert request ID first
+      const prevAssignment = await tx
+        .select({
+          status: expertAssignment.status,
+          expertRequestId: expertAssignment.expertRequestId
+        })
+        .from(expertAssignment)
+        .where(eq(expertAssignment.id, id))
+        .then(res => res[0]);
+      
       // Update the assignment and return the expertId and the updated assignment
       const [updated] = await tx
         .update(expertAssignment)
@@ -595,11 +608,32 @@ export const updateExpertAssignment = async ({
         .where(eq(expertAssignment.id, id))
         .returning({ 
           expertId: expertAssignment.expertId, 
+          expertRequestId: expertAssignment.expertRequestId,
           updatedAssignment: expertAssignment 
         });
 
       if (!updated || !updated.expertId) {
         throw new Error("Failed to update assignment or find expert ID.");
+      }
+
+      // Update completedExpertsCount when status changes to 'submitted'
+      if (status === 'submitted' && prevAssignment?.status !== 'submitted') {
+        await tx
+          .update(expertRequest)
+          .set({
+            completedExpertsCount: sql`${expertRequest.completedExpertsCount} + 1`,
+            updatedAt: new Date()
+          })
+          .where(eq(expertRequest.id, updated.expertRequestId));
+      } else if (prevAssignment?.status === 'submitted' && status !== 'submitted') {
+        // If changing from submitted to something else, decrement count
+        await tx
+          .update(expertRequest)
+          .set({
+            completedExpertsCount: sql`GREATEST(${expertRequest.completedExpertsCount} - 1, 0)`,
+            updatedAt: new Date()
+          })
+          .where(eq(expertRequest.id, updated.expertRequestId));
       }
 
       // Increment user credits and XP if credits were awarded
@@ -608,7 +642,7 @@ export const updateExpertAssignment = async ({
           .update(user)
           .set({ 
             credits: sql`${user.credits} + ${creditsAwarded}`,
-            xp: sql`${user.xp} + ${creditsAwarded}` // Award 100 XP per credit
+            xp: sql`${user.xp} + ${creditsAwarded}`
           })
           .where(eq(user.id, updated.expertId));
       }
