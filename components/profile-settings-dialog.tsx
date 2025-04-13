@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { User } from 'next-auth';
 import {
   Dialog,
@@ -23,10 +23,35 @@ interface ProfileSettingsDialogProps {
 }
 
 export function ProfileSettingsDialog({ user, children }: ProfileSettingsDialogProps) {
-  const [expertise, setExpertise] = useState<string>((user as any).expertise || '');
-  const [extractedTags, setExtractedTags] = useState<string[]>((user as any).expertiseTags || []);
+  const [expertise, setExpertise] = useState<string>('');
+  const [extractedTags, setExtractedTags] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (isOpen) {
+        setIsFetching(true);
+        try {
+          const response = await fetch('/api/user/profile');
+          if (!response.ok) {
+            throw new Error('Failed to fetch user data');
+          }
+          const userData = await response.json();
+          setExpertise(userData.expertise || '');
+          setExtractedTags(userData.expertiseTags || []);
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          toast.error('Failed to load profile data');
+        } finally {
+          setIsFetching(false);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [isOpen]);
 
   const extractTags = useCallback(async (text: string) => {
     if (!text.trim() || text.length < 10) {
@@ -76,7 +101,7 @@ export function ProfileSettingsDialog({ user, children }: ProfileSettingsDialogP
         },
         body: JSON.stringify({ 
           tags: extractedTags,
-          expertise 
+          expertise: expertise.trim()
         }),
       });
 
@@ -111,13 +136,14 @@ export function ProfileSettingsDialog({ user, children }: ProfileSettingsDialogP
               onChange={handleExpertiseChange}
               placeholder="e.g., I'm a full-stack developer with experience in React, Node.js, and AWS..."
               className="min-h-[100px]"
+              disabled={isFetching}
             />
           </div>
           
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <h4 className="text-sm font-medium">Generated Tags</h4>
-              {isLoading && (
+              {(isLoading || isFetching) && (
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               )}
             </div>
@@ -127,19 +153,19 @@ export function ProfileSettingsDialog({ user, children }: ProfileSettingsDialogP
                   {tag}
                 </Badge>
               ))}
-              {!isLoading && extractedTags.length === 0 && expertise.length >= 10 && (
+              {!isLoading && !isFetching && extractedTags.length === 0 && expertise.length >= 10 && (
                 <p className="text-sm text-muted-foreground">No tags generated yet. Keep typing...</p>
               )}
             </div>
           </div>
         </div>
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setIsOpen(false)}>
+          <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isFetching}>
             Cancel
           </Button>
           <Button 
             onClick={handleSave} 
-            disabled={!expertise.trim() || extractedTags.length === 0}
+            disabled={!expertise.trim() || extractedTags.length === 0 || isFetching}
           >
             Save Changes
           </Button>
