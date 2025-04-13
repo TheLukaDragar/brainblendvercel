@@ -276,7 +276,7 @@ export const ThinkingMessage = ({ expertMode }: { expertMode?: boolean }) => {
 
         <div className="flex flex-col gap-2 w-full">
           <div className="flex flex-col gap-4 text-muted-foreground">
-            {expertMode ? "Asking community for answers..." : "Hmm..."}
+            {expertMode ? "Finding the right experts..." : "Hmm..."}
           </div>
         </div>
       </div>

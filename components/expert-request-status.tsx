@@ -3,7 +3,7 @@
 import useSWR from 'swr';
 import { fetcher } from '@/lib/utils';
 import { type ExpertRequest } from '@/lib/db/schema';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { UsersIcon, ClockIcon, CheckCircleIcon, TagIcon } from 'lucide-react';
 
 // Assume the API returns this field
@@ -11,15 +11,73 @@ type ExpertRequestWithCounts = ExpertRequest & {
   completedExpertsCount: number;
 };
 
-export function ExpertRequestStatus({ chatId }: { chatId: string }) {
+export function ExpertRequestStatus({ chatId, isExpertRequestPending = false }: { chatId: string, isExpertRequestPending?: boolean }) {
+  const [showLoadingState, setShowLoadingState] = useState(isExpertRequestPending);
   const { data: expertRequests, error, isLoading } = useSWR<Array<ExpertRequestWithCounts>>(
     `/api/expert-requests?chatId=${chatId}`,
     fetcher,
-    { refreshInterval: 1000 } // Refresh every 10 seconds
+    { refreshInterval: 1000 } // Refresh every second
   );
 
-  if (isLoading) {
+  // Immediately show loading state when isExpertRequestPending changes
+  useEffect(() => {
+    if (isExpertRequestPending) {
+      setShowLoadingState(true);
+    }
+  }, [isExpertRequestPending]);
+
+  // If we initially show loading state but then get real data, stop showing loading state
+  useEffect(() => {
+    if (showLoadingState && expertRequests && expertRequests.length > 0) {
+      setShowLoadingState(false);
+    }
+    
+    // If we've been waiting for 10 seconds with no data, stop showing loading state
+    if (showLoadingState) {
+      const timer = setTimeout(() => {
+        setShowLoadingState(false);
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [showLoadingState, expertRequests]);
+
+  if (isLoading && !showLoadingState) {
     return null;
+  }
+
+  // Show loading state if explicitly requested or if we're still waiting for the first data
+  if (showLoadingState) {
+    return (
+      <div className="p-2">
+        <div className="mb-2 p-3 rounded-lg border bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 animate-pulse relative overflow-hidden">
+          {/* Shimmering effect overlay */}
+          <div className="absolute inset-0 skeleton-shine bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+          
+          <div className="flex justify-between items-center mb-2">
+            <div className="text-sm font-medium text-blue-600 dark:text-blue-400 flex items-center gap-1">
+              <UsersIcon size={14} />
+              Community Experts
+            </div>
+            <span className="text-xs px-2 py-1 rounded-full flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">
+              <ClockIcon size={12} className="animate-spin" />
+              Processing
+            </span>
+          </div>
+          
+          {/* Loading skeleton for tags */}
+          <div className="mb-2 flex flex-wrap gap-1">
+            <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+            <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+            <div className="h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+          </div>
+          
+          <div className="flex items-center gap-2 text-blue-600/80 dark:text-blue-400/80 text-xs mt-2">
+            <ClockIcon size={12} className="animate-pulse" />
+            <span>Finding the right experts for your question...</span>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error || !expertRequests || expertRequests.length === 0) {

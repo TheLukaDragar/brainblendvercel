@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { useLocalStorage, useWindowSize } from 'usehooks-ts';
 
 import { ArrowUpIcon, PaperclipIcon, StopIcon } from './icons';
+import { ClockIcon } from 'lucide-react';
 import { PreviewAttachment } from './preview-attachment';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
@@ -39,6 +40,7 @@ function PureMultimodalInput({
   handleSubmit,
   className,
   expertMode,
+  isExpertRequestPending,
 }: {
   chatId: string;
   input: UseChatHelpers['input'];
@@ -53,6 +55,7 @@ function PureMultimodalInput({
   handleSubmit: UseChatHelpers['handleSubmit'];
   className?: string;
   expertMode?: boolean;
+  isExpertRequestPending: boolean;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -261,6 +264,7 @@ function PureMultimodalInput({
             submitForm={submitForm}
             uploadQueue={uploadQueue}
             expertMode={expertMode}
+            isExpertRequestPending={isExpertRequestPending}
           />
         )}
       </div>
@@ -334,25 +338,38 @@ function PureSendButton({
   input,
   uploadQueue,
   expertMode,
+  isExpertRequestPending,
 }: {
   submitForm: () => void;
   input: string;
   uploadQueue: Array<string>;
   expertMode?: boolean;
+  isExpertRequestPending?: boolean;
 }) {
+  const shouldDisable = !input.trim() || uploadQueue.length > 0 || isExpertRequestPending;
+  
+  // Special button classes for when we're in expert mode and request is pending
+  const expertPendingClass = expertMode && isExpertRequestPending 
+    ? 'animate-pulse bg-blue-600 border-blue-500 text-white' 
+    : '';
+
   return (
     <Button
       data-testid="send-button"
       className={`rounded-full p-1.5 h-fit border ${
         expertMode ? 'bg-blue-500 border-blue-500 hover:bg-blue-600' : 'dark:border-zinc-600'
-      }`}
+      } ${expertPendingClass}`}
       onClick={(event) => {
         event.preventDefault();
         submitForm();
       }}
-      disabled={input.length === 0 || uploadQueue.length > 0}
+      disabled={shouldDisable}
     >
-      <ArrowUpIcon size={14} />
+      {expertMode && isExpertRequestPending ? (
+        <ClockIcon size={14} className="animate-spin" />
+      ) : (
+        <ArrowUpIcon size={14} />
+      )}
     </Button>
   );
 }
@@ -362,5 +379,6 @@ const SendButton = memo(PureSendButton, (prevProps, nextProps) => {
     return false;
   if (prevProps.input !== nextProps.input) return false;
   if (prevProps.expertMode !== nextProps.expertMode) return false;
+  if (prevProps.isExpertRequestPending !== nextProps.isExpertRequestPending) return false;
   return true;
 });

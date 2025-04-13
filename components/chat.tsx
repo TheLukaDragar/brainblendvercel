@@ -2,7 +2,7 @@
 
 import type { Attachment, UIMessage } from 'ai';
 import { useChat } from '@ai-sdk/react';
-import { useState } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 import { ChatHeader } from '@/components/chat-header';
 import type { Vote } from '@/lib/db/schema';
@@ -18,6 +18,7 @@ import { getChatHistoryPaginationKey } from './sidebar-history';
 import { ExpertRequestStatus } from './expert-request-status';
 import { ExpertResponse } from './expert-response';
 import { UsersIcon } from 'lucide-react';
+import type { UseChatHelpers } from '@ai-sdk/react';
 
 export function Chat({
   id,
@@ -38,6 +39,7 @@ export function Chat({
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
   const [expertMode, setExpertMode] = useState(false);
   const [animating, setAnimating] = useState(false);
+  const [isExpertRequestPending, setIsExpertRequestPending] = useState(false);
 
   const {
     messages,
@@ -60,9 +62,35 @@ export function Chat({
       mutate(unstable_serialize(getChatHistoryPaginationKey));
     },
     onError: () => {
+      if (expertMode) {
+        setIsExpertRequestPending(false);
+      }
       toast.error('An error occurred, please try again!');
     },
   });
+
+  // Use SWR to fetch expert requests to help determine when to clear the pending state
+  const { data: expertRequests } = useSWR(
+    isExpertRequestPending ? `/api/expert-requests?chatId=${id}` : null,
+    fetcher,
+    { refreshInterval: 1000 } // Refresh every second
+  );
+
+  // Reset the pending state when expert requests are loaded
+  useEffect(() => {
+    if (isExpertRequestPending && expertRequests && expertRequests.length > 0) {
+      setIsExpertRequestPending(false);
+    }
+    
+    // Add a timeout to reset pending state after 15 seconds if no expert requests found
+    if (isExpertRequestPending) {
+      const timeout = setTimeout(() => {
+        setIsExpertRequestPending(false);
+      }, 15000); // 15 seconds
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [isExpertRequestPending, expertRequests]);
 
   const { data: votes } = useSWR<Array<Vote>>(
     messages.length >= 2 ? `/api/vote?chatId=${id}` : null,
@@ -78,6 +106,35 @@ export function Chat({
       }, 300);
     }, 150);
     toast.success(expertMode ? 'AI mode activated' : 'Community mode activated');
+  };
+
+  // Custom submit handler that immediately shows the pending state
+  const handleCustomSubmit: typeof handleSubmit = (event, chatRequestOptions) => {
+    if (expertMode) {
+      // Immediately set the pending state
+      setIsExpertRequestPending(true);
+      
+      // Add a class to the body element to show a visual indication
+      document.body.classList.add('submitting-expert-request');
+      
+      // Flash the header to indicate processing
+      const header = document.querySelector('header');
+      if (header) {
+        header.classList.add('expert-request-flash');
+        setTimeout(() => {
+          header.classList.remove('expert-request-flash');
+        }, 1000);
+      }
+      
+      // Remove the loading bar class after animation completes
+      setTimeout(() => {
+        document.body.classList.remove('submitting-expert-request');
+      }, 1500);
+      
+    
+    }
+    
+    handleSubmit(event, chatRequestOptions);
   };
 
   return (
@@ -107,7 +164,7 @@ export function Chat({
           )}
         </div>
 
-        <ExpertRequestStatus chatId={id} />
+        <ExpertRequestStatus chatId={id} isExpertRequestPending={isExpertRequestPending} />
 
         <Messages
           chatId={id}
@@ -166,7 +223,7 @@ export function Chat({
                 chatId={id}
                 input={input}
                 setInput={setInput}
-                handleSubmit={handleSubmit}
+                handleSubmit={handleCustomSubmit}
                 status={status}
                 stop={stop}
                 attachments={attachments}
@@ -175,6 +232,7 @@ export function Chat({
                 setMessages={setMessages}
                 append={append}
                 expertMode={expertMode}
+                isExpertRequestPending={isExpertRequestPending}
               />
             </>
           )}
@@ -185,7 +243,7 @@ export function Chat({
         chatId={id}
         input={input}
         setInput={setInput}
-        handleSubmit={handleSubmit}
+        handleSubmit={handleCustomSubmit}
         status={status}
         stop={stop}
         attachments={attachments}
