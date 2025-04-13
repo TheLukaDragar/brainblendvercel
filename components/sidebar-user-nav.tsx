@@ -1,6 +1,7 @@
 'use client';
 import { ChevronUp } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import type { User } from 'next-auth';
 import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
@@ -19,7 +20,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { ProfileSettingsDialog } from './profile-settings-dialog';
 
 export function SidebarUserNav({ user }: { user: User }) {
   const { setTheme, theme } = useTheme();
@@ -73,16 +73,11 @@ export function SidebarUserNav({ user }: { user: User }) {
               {`Toggle ${theme === 'light' ? 'dark' : 'light'} mode`}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <ProfileSettingsDialog user={user}>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onSelect={(e) => {
-                  e.preventDefault();
-                }}
-              >
-                Edit Profile
-              </DropdownMenuItem>
-            </ProfileSettingsDialog>
+            <DropdownMenuItem asChild>
+              <Link href="/profile" className="cursor-pointer">
+                Your profile
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <button
                 type="button"
