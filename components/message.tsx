@@ -242,7 +242,7 @@ export const PreviewMessage = memo(
   },
 );
 
-export const ThinkingMessage = () => {
+export const ThinkingMessage = ({ expertMode }: { expertMode?: boolean }) => {
   const role = 'assistant';
 
   return (
@@ -267,7 +267,7 @@ export const ThinkingMessage = () => {
 
         <div className="flex flex-col gap-2 w-full">
           <div className="flex flex-col gap-4 text-muted-foreground">
-            Hmm...
+            {expertMode ? "Asking community for answers..." : "Hmm..."}
           </div>
         </div>
       </div>
