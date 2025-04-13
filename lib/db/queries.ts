@@ -724,3 +724,53 @@ export const getExpertAssignmentById = async ({
     .where(eq(expertAssignment.id, id))
     .then((res) => res[0]);
 };
+
+export type GetSubmittedAssignmentsByRequestIdParams = {
+  expertRequestId: string;
+};
+
+// Function to get all assignments for a request with status 'submitted'
+export const getSubmittedAssignmentsByRequestId = async ({
+  expertRequestId,
+}: GetSubmittedAssignmentsByRequestIdParams) => {
+  return await db
+    .select()
+    .from(expertAssignment)
+    .where(
+      and(
+        eq(expertAssignment.expertRequestId, expertRequestId),
+        eq(expertAssignment.status, 'submitted')
+      )
+    );
+};
+
+export type AcceptSubmittedAssignmentsParams = {
+  expertRequestId: string;
+};
+
+// Function to update status of submitted assignments to 'accepted' for a request
+export const acceptSubmittedAssignmentsByRequestId = async ({
+  expertRequestId,
+}: AcceptSubmittedAssignmentsParams) => {
+  try {
+    const result = await db
+      .update(expertAssignment)
+      .set({
+        status: 'accepted',
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(expertAssignment.expertRequestId, expertRequestId),
+          eq(expertAssignment.status, 'submitted')
+        )
+      )
+      .returning({ id: expertAssignment.id }); // Return IDs for logging/confirmation
+
+    console.log(`[${expertRequestId}] Updated ${result.length} submitted assignments to 'accepted'.`);
+    return result;
+  } catch (error) {
+    console.error(`[${expertRequestId}] Failed to update submitted assignments to 'accepted':`, error);
+    throw error; // Re-throw the error after logging
+  }
+};

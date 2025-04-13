@@ -570,18 +570,6 @@ export function ExpertAnswer({
                           </div>
                         </div>
                       </div>
-                      {currentAssignment.assignment.status === 'accepted' && (
-                        <div className="mt-1 px-2 py-0.5 w-fit bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 text-xs rounded-full flex items-center gap-1">
-                          <CheckCircleIcon size={12} />
-                          Accepted
-                        </div>
-                      )}
-                      {currentAssignment.assignment.status === 'rejected' && (
-                        <div className="mt-1 px-2 py-0.5 w-fit bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 text-xs rounded-full flex items-center gap-1">
-                          <XCircleIcon size={12} />
-                          Rejected
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -630,8 +618,7 @@ export function ExpertAnswer({
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-xs font-medium capitalize text-gray-700 dark:text-gray-300">{key}</span>
                           <span className={`text-xs font-bold rounded-full px-1.5 py-0.5 ${
-                            (value as any).score >= 8 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                            (value as any).score >= 6 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+                            (value as any).score >= 6 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
                             'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
                           }`}>{(value as any).score}/10</span>
                         </div>
@@ -644,8 +631,7 @@ export function ExpertAnswer({
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Overall Assessment</span>
                       <span className={`text-sm font-bold rounded-full px-2 py-0.5 ${
-                        assessment.overall.score >= 80 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                        assessment.overall.score >= 70 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+                        assessment.overall.score >= 70 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
                         'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
                       }`}>{assessment.overall.score}/100</span>
                     </div>

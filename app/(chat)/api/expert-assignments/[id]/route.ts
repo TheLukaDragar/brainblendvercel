@@ -1,5 +1,6 @@
 import { auth } from '@/app/(auth)/auth';
-import { updateExpertAssignment } from '@/lib/db/queries';
+import { updateExpertAssignment, updateExpertRequestStatus } from '@/lib/db/queries';
+import { processExpertResponses } from '@/lib/expert-processing';
 
 export async function PATCH(
   request: Request,
@@ -33,6 +34,29 @@ export async function PATCH(
 
     if (!updatedAssignment) {
       return new Response('Assignment not found', { status: 404 });
+    }
+
+    // If the status was updated to 'accepted', mark the parent request as 'completed'
+    if (status === 'accepted' && updatedAssignment.expertRequestId) {
+      console.log(`[${updatedAssignment.expertRequestId}] Assignment ${id} accepted. Marking parent request as completed.`);
+      try {
+        await updateExpertRequestStatus({
+          id: updatedAssignment.expertRequestId,
+          status: 'completed',
+        });
+        console.log(`[${updatedAssignment.expertRequestId}] Parent request status updated to completed.`);
+      } catch (error) {
+        console.error(`[${updatedAssignment.expertRequestId}] Error updating parent request status to completed:`, error);
+        // Continue processing even if parent update fails, but log the error
+      }
+    }
+
+    // If the status was updated to 'submitted', trigger the processing
+    if (status === 'submitted' && updatedAssignment.expertRequestId) {
+      // Fire-and-forget: Don't await this, let it run in the background
+      processExpertResponses({ expertRequestId: updatedAssignment.expertRequestId }).catch((err: Error) => {
+        console.error(`Error processing expert responses for request ${updatedAssignment.expertRequestId}:`, err);
+      });
     }
 
     return new Response(JSON.stringify(updatedAssignment), {

@@ -16,6 +16,7 @@ interface ArtifactMessagesProps {
   reload: UseChatHelpers['reload'];
   isReadonly: boolean;
   artifactStatus: UIArtifact['status'];
+  isExpert: boolean;
 }
 
 function PureArtifactMessages({
@@ -26,6 +27,7 @@ function PureArtifactMessages({
   setMessages,
   reload,
   isReadonly,
+  isExpert,
 }: ArtifactMessagesProps) {
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
@@ -49,6 +51,7 @@ function PureArtifactMessages({
           setMessages={setMessages}
           reload={reload}
           isReadonly={isReadonly}
+          isExpert={isExpert}
         />
       ))}
 

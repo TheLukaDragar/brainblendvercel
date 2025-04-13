@@ -45,6 +45,7 @@ export const myProvider = isTestEnvironment
         'title-model': local_nemotron,
         'artifact-model': local_nemotron,
         'tag-model': local_nemotron,
+        'expert-consensus-synthesis-model': local_nemotron,
       },
 
     })
@@ -68,6 +69,7 @@ export const myProvider = isTestEnvironment
         'title-model': xai('grok-2-1212'),
         'artifact-model': xai('grok-2-1212'),
         'tag-model': xai('grok-2-1212'),
+        'expert-consensus-synthesis-model': xai('grok-2-1212'),
       },
       textEmbeddingModels: {
         'text-embedding-3-small': openai_api.embedding('text-embedding-3-small'),

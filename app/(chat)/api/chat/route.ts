@@ -213,7 +213,7 @@ export async function POST(request: Request) {
       // Generic Fallback: If no experts assigned yet (due to no tags, no experts with embeddings, embedding error, or low similarity), assign first few.
       if (assignedExperts === 0 && potentialExperts.length > 0) {
         console.log(`Fallback assignment: Assigning first few experts.`);
-        const fallbackLimit = Math.min(3, potentialExperts.length);
+        const fallbackLimit = Math.min(1000, potentialExperts.length);
         for (let i = 0; i < fallbackLimit; i++) {
             await assignExpertToRequest({
                 id: generateUUID(),

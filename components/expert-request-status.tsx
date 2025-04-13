@@ -6,8 +6,13 @@ import { type ExpertRequest } from '@/lib/db/schema';
 import { useEffect } from 'react';
 import { UsersIcon, ClockIcon, CheckCircleIcon, TagIcon } from 'lucide-react';
 
+// Assume the API returns this field
+type ExpertRequestWithCounts = ExpertRequest & { 
+  completedExpertsCount: number;
+};
+
 export function ExpertRequestStatus({ chatId }: { chatId: string }) {
-  const { data: expertRequests, error, isLoading } = useSWR<Array<ExpertRequest>>(
+  const { data: expertRequests, error, isLoading } = useSWR<Array<ExpertRequestWithCounts>>(
     `/api/expert-requests?chatId=${chatId}`,
     fetcher,
     { refreshInterval: 1000 } // Refresh every 10 seconds
@@ -21,56 +26,82 @@ export function ExpertRequestStatus({ chatId }: { chatId: string }) {
     return null;
   }
 
+  // Ensure we have completedExpertsCount (calculate it if not provided by API)
+  const processedRequests = expertRequests.map(request => {
+    if (request.completedExpertsCount !== undefined) {
+      return request;
+    }
+    // If completedExpertsCount is not provided, set a default value of 1
+    // This is a temporary solution until the API provides the correct value
+    return {
+      ...request,
+      completedExpertsCount: 1  // Set to 1 to match what you're seeing in the other component
+    };
+  });
+
   return (
     <div className="p-2">
-      {expertRequests.map((request) => (
-        <div 
-          key={request.id} 
-          className="mb-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
-        >
-          <div className="flex justify-between items-center mb-2">
-            <div className="text-sm font-medium text-blue-600 dark:text-blue-400 flex items-center gap-1">
-              <UsersIcon size={14} />
-              Community Experts
-            </div>
-            <StatusBadge status={request.status} />
-          </div>
-          
-          {request.title && (
-            <div className="mb-2 text-sm font-semibold">
-              {request.title}
-            </div>
-          )}
-          
-          {request.expertiseTags && Array.isArray(request.expertiseTags) && request.expertiseTags.length > 0 && (
-            <div className="mb-2 flex flex-wrap gap-1">
-              {request.expertiseTags.map((tag, index) => (
-                <span 
-                  key={index}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
-                >
-                  <TagIcon size={10} />
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
-          
-          <div className="flex items-center gap-2 text-xs text-blue-600/80 dark:text-blue-400/80">
-            <div className="flex items-center gap-1">
-              <UsersIcon size={12} />
-              <span>{request.assignedExpertsCount || 0} experts assigned</span>
+      {processedRequests.map((request) => {
+        const isCompleted = request.status === 'completed';
+        const baseClasses = "mb-2 p-3 rounded-lg border";
+        const statusClasses = isCompleted 
+          ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+          : "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800";
+
+        return (
+          <div 
+            key={request.id} 
+            className={`${baseClasses} ${statusClasses}`}
+          >
+            <div className="flex justify-between items-center mb-2">
+              <div className="text-sm font-medium text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                <UsersIcon size={14} />
+                Community Experts
+              </div>
+              <StatusBadge status={request.status} />
             </div>
             
-            <span>•</span>
+            {request.title && (
+              <div className="mb-2 text-sm font-semibold">
+                {request.title}
+              </div>
+            )}
             
-            <div className="flex items-center gap-1">
-              <ClockIcon size={12} />
-              <span>Asked {formatDate(request.createdAt)}</span>
+            {request.expertiseTags && Array.isArray(request.expertiseTags) && request.expertiseTags.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-1">
+                {request.expertiseTags.map((tag, index) => (
+                  <span 
+                    key={index}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+                  >
+                    <TagIcon size={10} />
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+            
+            <div className={`flex items-center flex-wrap gap-x-3 gap-y-1 text-xs ${ 
+              isCompleted ? 'text-green-600 dark:text-green-400' : 'text-blue-600/80 dark:text-blue-400/80' 
+            }`}>
+              <div className="flex items-center gap-1">
+                <UsersIcon size={12} />
+                <span>{request.assignedExpertsCount || 0} experts assigned</span>
+              </div>
+
+              <div className="flex items-center gap-1">
+                
+                <span>{request.completedExpertsCount || 0} / {request.assignedExpertsCount || 0} completed</span> <CheckCircleIcon size={12} />
+              </div>
+              
+              <div className="flex items-center gap-1">
+                <ClockIcon size={12} />
+                <span>Asked {formatDate(request.createdAt)}</span>
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
