@@ -118,10 +118,10 @@ export function PureMessageActions({
             <TooltipTrigger asChild>
               <Button
                 data-testid="ask-community"
-                className="py-1 px-3 h-fit bg-blue-500 hover:bg-blue-600 text-white"
+                className="py-1 px-3 h-fit dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800 text-white"
                 onClick={handleAskCommunity}
               >
-                <UsersIcon className="mr-1 h-4 w-4" /> Vprasaj skupnost
+                <UsersIcon className="mr-1 h-4 w-4" /> Ask the community
               </Button>
             </TooltipTrigger>
             <TooltipContent>Ask the community</TooltipContent>
