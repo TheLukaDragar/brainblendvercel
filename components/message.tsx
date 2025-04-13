@@ -29,6 +29,8 @@ const PurePreviewMessage = ({
   setMessages,
   reload,
   isReadonly,
+  setInput,
+  setExpertMode,
 }: {
   chatId: string;
   message: UIMessage;
@@ -37,6 +39,8 @@ const PurePreviewMessage = ({
   setMessages: UseChatHelpers['setMessages'];
   reload: UseChatHelpers['reload'];
   isReadonly: boolean;
+  setInput?: (input: string) => void;
+  setExpertMode?: (mode: boolean) => void;
 }) => {
   const [mode, setMode] = useState<'view' | 'edit'>('view');
 
@@ -223,6 +227,9 @@ const PurePreviewMessage = ({
                 message={message}
                 vote={vote}
                 isLoading={isLoading}
+                setMessages={setMessages}
+                setInput={setInput}
+                setExpertMode={setExpertMode}
               />
             )}
           </div>
