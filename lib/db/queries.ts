@@ -73,10 +73,12 @@ export async function saveChat({
   id,
   userId,
   title,
+  expertiseTags = [],
 }: {
   id: string;
   userId: string;
   title: string;
+  expertiseTags?: string[];
 }) {
   try {
     return await db.insert(chat).values({
@@ -84,6 +86,7 @@ export async function saveChat({
       createdAt: new Date(),
       userId,
       title,
+      expertiseTags,
     });
   } catch (error) {
     console.error('Failed to save chat in database');
@@ -431,12 +434,14 @@ export type SaveExpertRequestParams = {
   id: string;
   chatId: string;
   question: string;
+  expertiseTags?: string[];
 };
 
 export const saveExpertRequest = async ({
   id,
   chatId,
   question,
+  expertiseTags,
 }: SaveExpertRequestParams) => {
   return await db
     .insert(expertRequest)
@@ -444,6 +449,7 @@ export const saveExpertRequest = async ({
       id,
       chatId,
       question,
+      expertiseTags,
       status: 'pending',
       createdAt: new Date(),
       updatedAt: new Date(),

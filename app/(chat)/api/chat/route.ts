@@ -23,7 +23,7 @@ import {
   getMostRecentUserMessage,
   getTrailingMessageId,
 } from '@/lib/utils';
-import { generateTitleFromUserMessage } from '../../actions';
+import { generateTitleFromUserMessage, extractTagsFromUserMessage } from '../../actions';
 import { createDocument } from '@/lib/ai/tools/create-document';
 import { updateDocument } from '@/lib/ai/tools/update-document';
 import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
@@ -59,6 +59,7 @@ export async function POST(request: Request) {
       return new Response('No user message found', { status: 400 });
     }
     let title = 'Untitled';
+    let tags: string[] = [];
 
     const chat = await getChatById({ id });
 
@@ -67,7 +68,16 @@ export async function POST(request: Request) {
         message: userMessage,
       });
 
-      await saveChat({ id, userId: session.user.id, title });
+      console.log('title', title);
+
+      // Extract expertise tags from the user message
+      tags = await extractTagsFromUserMessage({
+        message: userMessage,
+      });
+
+      console.log('tags', tags);
+
+      await saveChat({ id, userId: session.user.id, title, expertiseTags: tags });
     } else {
       if (chat.userId !== session.user.id) {
         return new Response('Unauthorized', { status: 401 });
@@ -90,11 +100,16 @@ export async function POST(request: Request) {
     // If this is an expert request, create it and assign to experts
     if (isExpertRequest) {
       // Extract the question from the user message
-
-      
       const questionText = Array.isArray(userMessage.parts) 
         ? userMessage.parts.map(part => typeof part === 'string' ? part : '').join(' ')
         : typeof userMessage.parts === 'string' ? userMessage.parts : '';
+      
+      // Extract expertise tags if not already done
+      if (tags.length === 0) {
+        tags = await extractTagsFromUserMessage({
+          message: userMessage,
+        });
+      }
       
       // Create the expert request
       const expertRequestId = generateUUID();
@@ -102,24 +117,33 @@ export async function POST(request: Request) {
         id: expertRequestId,
         chatId: id,
         question: questionText,
-        
+        expertiseTags: tags,
       });
       
-      // Find all users to assign as experts (for now, assign to all users)
-      // In a real implementation, you would filter users based on expertise
-      //currently all users are experts assigned to the request 
+      // Find all users to assign as experts
       const allUsers = await getAllExperts();
       
-      // Assign the request to all users (excluding the requesting user)
+      // Assign the request to experts based on expertise tags
+      let assignedExperts = 0;
+      
       for (const potentialExpert of allUsers) {
-        console.log('potentialExpert for assignemnt', potentialExpert);
-        if (potentialExpert.id !== session.user.id) {
+        // Skip the requesting user
+        if (potentialExpert.id === session.user.id) continue;
+        
+        // If expert has matching expertise tags or if we need to assign at least one expert
+        const expertTags = potentialExpert.expertiseTags || [];
+        const matchingTags = tags.filter(tag => expertTags.includes(tag));
+        const hasMatchingExpertise = tags.length === 0 || matchingTags.length > 0;
+        
+        if (hasMatchingExpertise || assignedExperts === 0) {
+          console.log(`Expert ${potentialExpert.id} matches tags:`, matchingTags);
           await assignExpertToRequest({
             id: generateUUID(),
             title: title,
             expertRequestId: expertRequestId,
-            expertId: potentialExpert.id,
+            expertId: potentialExpert.id
           });
+          assignedExperts++;
         }
       }
       

@@ -57,3 +57,33 @@ export async function updateChatVisibility({
 }) {
   await updateChatVisiblityById({ chatId, visibility });
 }
+
+export async function extractTagsFromUserMessage({
+  message,
+}: {
+  message: Message;
+}) {
+  try {
+    const { text: tagsJson } = await generateText({
+      model: myProvider.languageModel('tag-model'),
+      system: `\n
+    - you will generate a list of relevant expertise tags based on the user's message
+    - identify 3-5 most relevant expertise areas from the conversation
+    - return ONLY a valid JSON array of strings with no explanation
+    - example: ["Web Development", "Machine Learning", "Cloud Computing"]
+    - do not include tags that aren't in the predefined list`,
+      prompt: JSON.stringify(message),
+    });
+
+    try {
+      const tags = JSON.parse(tagsJson);
+      return Array.isArray(tags) ? tags : [];
+    } catch (error) {
+      console.error('Error parsing tags JSON:', error);
+      return [];
+    }
+  } catch (error) {
+    console.error('Error extracting tags from user message:', error);
+    return [];
+  }
+}

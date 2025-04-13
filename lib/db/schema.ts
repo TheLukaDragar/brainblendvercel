@@ -32,6 +32,7 @@ export const chat = pgTable('Chat', {
   visibility: varchar('visibility', { enum: ['public', 'private'] })
     .notNull()
     .default('private'),
+  expertiseTags: json('expertiseTags').$type<string[]>().default([]),
 });
 
 export type Chat = InferSelectModel<typeof chat>;
@@ -157,6 +158,7 @@ export type Suggestion = InferSelectModel<typeof suggestion>;
 export const expertRequest = pgTable('ExpertRequest', {
   id: uuid('id').primaryKey().notNull().defaultRandom(),
   title: text('title').default('Untitled'),
+  expertiseTags: json('expertiseTags').$type<string[]>().default([]),
   chatId: uuid('chatId')
     .notNull()
     .references(() => chat.id),

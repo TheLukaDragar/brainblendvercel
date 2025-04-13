@@ -1,0 +1,71 @@
+{
+    "id": "b5ca6fd3-80d1-49ec-be6b-c6affe05ffd9",
+    "prevId": "a4ba5fe2-70d0-48ea-9c70-1c13ffe05ffe",
+    "version": "7",
+    "dialect": "postgresql",
+    "tables": {
+        "public.Chat": {
+            "name": "Chat",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "createdAt": {
+                    "name": "createdAt",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "title": {
+                    "name": "title",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "userId": {
+                    "name": "userId",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "visibility": {
+                    "name": "visibility",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'private'"
+                },
+                "expertiseTags": {
+                    "name": "expertiseTags",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "'[]'::jsonb"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "Chat_userId_User_id_fk": {
+                    "name": "Chat_userId_User_id_fk",
+                    "tableFrom": "Chat",
+                    "tableTo": "User",
+                    "columnsFrom": [
+                        "userId"
+                    ],
+                    "columnsTo": [
+                        "id"
+                    ],
+                    "onDelete": "no action",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {}
+        }
+    }
+}

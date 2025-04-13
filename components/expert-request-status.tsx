@@ -4,7 +4,7 @@ import useSWR from 'swr';
 import { fetcher } from '@/lib/utils';
 import { type ExpertRequest } from '@/lib/db/schema';
 import { useEffect } from 'react';
-import { UsersIcon, ClockIcon, CheckCircleIcon } from 'lucide-react';
+import { UsersIcon, ClockIcon, CheckCircleIcon, TagIcon } from 'lucide-react';
 
 export function ExpertRequestStatus({ chatId }: { chatId: string }) {
   const { data: expertRequests, error, isLoading } = useSWR<Array<ExpertRequest>>(
@@ -39,6 +39,20 @@ export function ExpertRequestStatus({ chatId }: { chatId: string }) {
           {request.title && (
             <div className="mb-2 text-sm font-semibold">
               {request.title}
+            </div>
+          )}
+          
+          {request.expertiseTags && Array.isArray(request.expertiseTags) && request.expertiseTags.length > 0 && (
+            <div className="mb-2 flex flex-wrap gap-1">
+              {request.expertiseTags.map((tag, index) => (
+                <span 
+                  key={index}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+                >
+                  <TagIcon size={10} />
+                  {tag}
+                </span>
+              ))}
             </div>
           )}
           
