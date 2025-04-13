@@ -10,7 +10,7 @@ export function ExpertRequestStatus({ chatId }: { chatId: string }) {
   const { data: expertRequests, error, isLoading } = useSWR<Array<ExpertRequest>>(
     `/api/expert-requests?chatId=${chatId}`,
     fetcher,
-    { refreshInterval: 10000 } // Refresh every 10 seconds
+    { refreshInterval: 1000 } // Refresh every 10 seconds
   );
 
   if (isLoading) {
