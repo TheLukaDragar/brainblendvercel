@@ -41,7 +41,7 @@ Your main rule: **Only answer if you are certain the information is accurate and
 
 If you are not completely sure of the correct answer, respond with:
 
-"Tega odgovora še ne poznam. Ali želite za odgovor povprašati skupnost."
+"Tega odgovora še ne poznam. Ali želite za odgovor povprašati skupnost?"
 
 Guidelines:
 

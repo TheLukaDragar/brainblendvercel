@@ -128,13 +128,13 @@ export function Chat({
               <button
                 type="button"
                 onClick={handleExpertModeToggle}
-                className={`p-2 rounded-full relative overflow-hidden ${
+                className={`p-2 rounded-2xl relative overflow-hidden ${
                   expertMode ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
-                } focus:outline-none transition-colors`}
+                } focus:outline-none transition-colors w-16`}
                 title={expertMode ? "Switch to AI" : "Ask community"}
                 disabled={animating}
               >
-                <div className={`relative w-5 h-5 ${animating ? 'animate-pulse' : ''}`}>
+                <div className={`relative w-5 h-5 mx-auto ${animating ? 'animate-pulse' : ''}`}>
                   {/* AI icon */}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
