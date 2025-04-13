@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { genSaltSync, hashSync } from 'bcrypt-ts';
-import { and, asc, desc, eq, gt, gte, inArray, lt, SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, gte, inArray, lt, SQL, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
@@ -32,12 +32,21 @@ const db = drizzle(client);
 
 export async function getAllExperts(): Promise<Array<User>> {
   try {
-    return await db.select().from(user);
+    return await db.select({
+      id: user.id,
+      email: user.email,
+      password: user.password,
+      expertise: user.expertise,
+      expertiseTags: user.expertiseTags,
+      expertiseTagsEmbedding: user.expertiseTagsEmbedding,
+      credits: user.credits,
+    }).from(user);
   } catch (error) {
     console.error('Failed to get all experts from database');
     throw error;
   }
 }
+
 export async function getUser(email: string): Promise<Array<User>> {
   try {
     return await db.select().from(user).where(eq(user.email, email));
@@ -51,7 +60,8 @@ export async function createUser(
   email: string, 
   password: string, 
   expertise?: string,
-  expertiseTags?: string[]
+  expertiseTags?: string[],
+  expertiseTagsEmbedding?: number[] | null
 ) {
   const salt = genSaltSync(10);
   const hash = hashSync(password, salt);
@@ -61,7 +71,8 @@ export async function createUser(
       email, 
       password: hash, 
       expertise,
-      expertiseTags: expertiseTags || []
+      expertiseTags: expertiseTags || [],
+      expertiseTagsEmbedding: expertiseTagsEmbedding || null,
     });
   } catch (error) {
     console.error('Failed to create user in database');
@@ -559,48 +570,79 @@ export type UpdateExpertAssignmentParams = {
   id: string;
   status: 'assigned' | 'working' | 'submitted' | 'accepted' | 'rejected';
   response?: string;
+  creditsAwarded?: number | null;
 };
 
 export const updateExpertAssignment = async ({
   id,
   status,
   response,
+  creditsAwarded,
 }: UpdateExpertAssignmentParams) => {
-  const updateData: any = {
-    status,
-    updatedAt: new Date(),
-  };
-  
-  if (response !== undefined) {
-    updateData.response = response;
+  try {
+    // Wrap in transaction
+    const result = await db.transaction(async (tx) => {
+      // Update the assignment and return the expertId and the updated assignment
+      const [updated] = await tx
+        .update(expertAssignment)
+        .set({
+          status,
+          response,
+          creditsAwarded,
+          updatedAt: new Date(),
+        })
+        .where(eq(expertAssignment.id, id))
+        .returning({ 
+          expertId: expertAssignment.expertId, 
+          updatedAssignment: expertAssignment 
+        });
+
+      if (!updated || !updated.expertId) {
+        throw new Error("Failed to update assignment or find expert ID.");
+      }
+
+      // Increment user credits if credits were awarded
+      if (creditsAwarded && creditsAwarded > 0) {
+        await tx
+          .update(user)
+          .set({ credits: sql`${user.credits} + ${creditsAwarded}` })
+          .where(eq(user.id, updated.expertId));
+      }
+
+      return updated.updatedAssignment; // Return the updated assignment data
+    });
+
+    return result; // Return the result from the transaction
+  } catch (error) {
+    console.error('Failed to update expert assignment or user credits in database', error);
+    throw error;
   }
-  
-  return await db
-    .update(expertAssignment)
-    .set(updateData)
-    .where(eq(expertAssignment.id, id))
-    .returning()
-    .then((res) => res[0]);
 };
 
 export type RateExpertResponseParams = {
   id: string;
-  rating: '1' | '2' | '3' | '4' | '5';
+  rating: number;
 };
 
 export const rateExpertResponse = async ({
   id,
   rating,
 }: RateExpertResponseParams) => {
-  return await db
-    .update(expertAssignment)
-    .set({
-      rating,
-      updatedAt: new Date(),
-    })
-    .where(eq(expertAssignment.id, id))
-    .returning()
-    .then((res) => res[0]);
+  if (rating < 1 || rating > 5) {
+    throw new Error("Invalid rating value. Must be between 1 and 5.");
+  }
+
+  try {
+    return await db
+      .update(expertAssignment)
+      .set({ rating: rating, updatedAt: new Date() })
+      .where(eq(expertAssignment.id, id))
+      .returning()
+      .then((res) => res[0]);
+  } catch (error) {
+    console.error('Failed to rate expert response in database', error);
+    throw error;
+  }
 };
 
 export type GetExpertAssignmentsParams = {

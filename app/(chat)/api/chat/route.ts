@@ -4,6 +4,8 @@ import {
   createDataStreamResponse,
   smoothStream,
   streamText,
+  cosineSimilarity,
+  embed,
 } from 'ai';
 import { auth } from '@/app/(auth)/auth';
 import { systemPrompt } from '@/lib/ai/prompts';
@@ -33,6 +35,19 @@ import { myProvider } from '@/lib/ai/providers';
 
 export const maxDuration = 60;
 
+// Helper function to calculate the average of embeddings
+function averageEmbeddings(embeddings: number[][]): number[] {
+  if (embeddings.length === 0) return [];
+  const dimension = embeddings[0].length;
+  const sum = new Array(dimension).fill(0);
+  for (const embedding of embeddings) {
+    for (let i = 0; i < dimension; i++) {
+      sum[i] += embedding[i];
+    }
+  }
+  return sum.map(val => val / embeddings.length);
+}
+
 export async function POST(request: Request) {
   try {
     const {
@@ -52,6 +67,9 @@ export async function POST(request: Request) {
     if (!session || !session.user || !session.user.id) {
       return new Response('Unauthorized', { status: 401 });
     }
+
+    // Extract userId after the check for cleaner type inference
+    const userId = session.user.id;
 
     const userMessage = getMostRecentUserMessage(messages);
 
@@ -120,39 +138,101 @@ export async function POST(request: Request) {
         expertiseTags: tags,
       });
       
-      // Find all users to assign as experts
-      const allUsers = await getAllExperts();
-      
-      // Assign the request to experts based on expertise tags
+      // --- Semantic Matching Logic ---
+      const allExperts = await getAllExperts();
+      const potentialExperts = allExperts.filter(expert => expert.id !== userId);
+
       let assignedExperts = 0;
-      
-      for (const potentialExpert of allUsers) {
-        // Skip the requesting user
-        if (potentialExpert.id === session.user.id) continue;
-        
-        // If expert has matching expertise tags or if we need to assign at least one expert
-        const expertTags = potentialExpert.expertiseTags || [];
-        const matchingTags = tags.filter(tag => expertTags.includes(tag));
-        const hasMatchingExpertise = tags.length === 0 || matchingTags.length > 0;
-        
-        if (hasMatchingExpertise || assignedExperts === 0) {
-          console.log(`Expert ${potentialExpert.id} matches tags:`, matchingTags);
-          await assignExpertToRequest({
-            id: generateUUID(),
-            title: title,
-            expertRequestId: expertRequestId,
-            expertId: potentialExpert.id
-          });
-          assignedExperts++;
+      const similarityThreshold = 0.7;
+
+      // Only proceed with semantic matching if request has tags and there are potential experts
+      if (tags.length > 0 && potentialExperts.length > 0) {
+        // Filter to experts who have a pre-computed embedding
+        const expertsWithEmbeddings = potentialExperts.filter(
+          expert => expert.expertiseTagsEmbedding && expert.expertiseTagsEmbedding.length > 0
+        );
+
+        if (expertsWithEmbeddings.length > 0) {
+            try {
+                // 1. Embed the request tags
+                const requestTagString = tags.join(', ');
+                const { embedding: requestEmbedding, usage: requestUsage } = await embed({
+                    model: myProvider.textEmbeddingModel('text-embedding-3-small'),
+                    value: requestTagString,
+                });
+                 console.log('Request embedding usage:', requestUsage);
+
+                if (!requestEmbedding) {
+                    throw new Error('Failed to generate request embedding.');
+                }
+
+                // 2. Calculate similarity using pre-computed expert embeddings
+                let bestMatch = { expertId: '', score: -1 };
+
+                for (const expert of expertsWithEmbeddings) {
+                    // Ensure embedding is valid (though filter should handle null)
+                    if (!expert.expertiseTagsEmbedding) continue;
+
+                    const similarity = cosineSimilarity(requestEmbedding, expert.expertiseTagsEmbedding);
+                    console.log(`Similarity between request and expert ${expert.id}: ${similarity}`);
+
+                    if (similarity >= similarityThreshold) {
+                        console.log(`Assigning expert ${expert.id} based on similarity threshold.`);
+                        await assignExpertToRequest({
+                            id: generateUUID(),
+                            title: title,
+                            expertRequestId: expertRequestId,
+                            expertId: expert.id
+                        });
+                        assignedExperts++;
+                    } else if (similarity > bestMatch.score) {
+                        bestMatch = { expertId: expert.id, score: similarity };
+                    }
+                }
+
+                 // Fallback within semantic matching: If no expert met the threshold, assign the best match
+                if (assignedExperts === 0 && bestMatch.expertId) {
+                    console.log(`Assigning best match expert ${bestMatch.expertId} (similarity: ${bestMatch.score}) as fallback.`);
+                    await assignExpertToRequest({
+                        id: generateUUID(),
+                        title: title,
+                        expertRequestId: expertRequestId,
+                        expertId: bestMatch.expertId
+                    });
+                    assignedExperts++;
+                }
+
+            } catch (embeddingError) {
+                console.error("Error during semantic matching:", embeddingError);
+                // Let the generic fallback handle assignment if embedding fails
+                assignedExperts = 0; // Reset count ensure fallback triggers if needed
+            }
         }
       }
-      
+
+      // Generic Fallback: If no experts assigned yet (due to no tags, no experts with embeddings, embedding error, or low similarity), assign first few.
+      if (assignedExperts === 0 && potentialExperts.length > 0) {
+        console.log(`Fallback assignment: Assigning first few experts.`);
+        const fallbackLimit = Math.min(3, potentialExperts.length);
+        for (let i = 0; i < fallbackLimit; i++) {
+            await assignExpertToRequest({
+                id: generateUUID(),
+                title: title,
+                expertRequestId: expertRequestId,
+                expertId: potentialExperts[i].id
+            });
+            assignedExperts++;
+        }
+        console.log(`Fallback assignment completed. Assigned ${assignedExperts} experts.`);
+      }
+       // --- End Semantic Matching Logic ---
+
       // Return a response that indicates an expert request was created
       return createDataStreamResponse({
         execute: (dataStream) => {
           const expertResponseMessage = {
             role: 'assistant' as const,
-            content: `Your question has been sent to our community experts. Experts assigned: ${expertRequest.assignedExpertsCount || 0}. You'll be notified when they respond.`,
+            content: `Your question has been sent to ${assignedExperts} community expert(s). You'll be notified when they respond.`,
           };
           
           const result = streamText({

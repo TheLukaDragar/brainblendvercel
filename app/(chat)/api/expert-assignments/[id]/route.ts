@@ -12,7 +12,7 @@ export async function PATCH(
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const { status, response } = await request.json();
+    const { status, response, creditsAwarded } = await request.json();
     
     // Validate status
     const validStatuses = ['assigned', 'working', 'submitted', 'accepted', 'rejected'];
@@ -28,6 +28,7 @@ export async function PATCH(
       id,
       status,
       response,
+      creditsAwarded,
     });
 
     if (!updatedAssignment) {
