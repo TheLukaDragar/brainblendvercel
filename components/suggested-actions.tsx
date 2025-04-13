@@ -14,7 +14,7 @@ interface SuggestedActionsProps {
 function PureSuggestedActions({ chatId, append, expertMode }: SuggestedActionsProps) {
   const defaultSuggestedActions = [
     {
-      title: 'What are the advantages',
+      title: 'What are the avantages',
       label: 'of using Next.js?',
       action: 'What are the advantages of using Next.js?',
     },
@@ -30,8 +30,8 @@ function PureSuggestedActions({ chatId, append, expertMode }: SuggestedActionsPr
     },
     {
       title: 'What is the weather',
-      label: 'in San Francisco?',
-      action: 'What is the weather in San Francisco?',
+      label: 'in Ljubljana?',
+      action: 'What is the weather in Ljubljana?',
     },
   ];
 
