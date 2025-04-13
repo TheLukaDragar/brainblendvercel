@@ -33,6 +33,7 @@ export const user = pgTable("User", {
 	expertiseTags: json().default([]),
 	expertiseTagsEmbedding: json().default(null),
 	credits: integer().default(0).notNull(),
+	xp: integer().default(0).notNull(),
 });
 
 export const message = pgTable("Message", {

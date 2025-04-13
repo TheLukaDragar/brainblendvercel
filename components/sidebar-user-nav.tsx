@@ -20,28 +20,31 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { calculateLevel } from '@/lib/level';
 
 export function SidebarUserNav({ user }: { user: User }) {
   const { setTheme, theme } = useTheme();
-  const [credits, setCredits] = useState<number>(0);
+  const [xp, setXP] = useState<number>(0);
 
   useEffect(() => {
-    const fetchCredits = async () => {
+    const fetchUserData = async () => {
       try {
         const response = await fetch('/api/user/profile');
         if (!response.ok) {
           throw new Error('Failed to fetch user data');
         }
         const userData = await response.json();
-        setCredits(userData.credits || 0);
+        setXP(userData.xp || 0);
       } catch (error) {
-        console.error('Error fetching user credits:', error);
-        toast.error('Failed to load user credits');
+        console.error('Error fetching user data:', error);
+        toast.error('Failed to load user data');
       }
     };
 
-    fetchCredits();
+    fetchUserData();
   }, []);
+
+  const level = calculateLevel(xp);
 
   return (
     <SidebarMenu>
@@ -57,7 +60,7 @@ export function SidebarUserNav({ user }: { user: User }) {
                 className="rounded-full"
               />
               <div className="flex items-center gap-2">
-                <span className="truncate">{user?.email} ({credits} credits)</span>
+                <span className="truncate">{user?.email} (Level {level})</span>
               </div>
               <ChevronUp className="ml-auto" />
             </SidebarMenuButton>

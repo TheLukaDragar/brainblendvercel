@@ -602,11 +602,14 @@ export const updateExpertAssignment = async ({
         throw new Error("Failed to update assignment or find expert ID.");
       }
 
-      // Increment user credits if credits were awarded
+      // Increment user credits and XP if credits were awarded
       if (creditsAwarded && creditsAwarded > 0) {
         await tx
           .update(user)
-          .set({ credits: sql`${user.credits} + ${creditsAwarded}` })
+          .set({ 
+            credits: sql`${user.credits} + ${creditsAwarded}`,
+            xp: sql`${user.xp} + ${creditsAwarded}` // Award 100 XP per credit
+          })
           .where(eq(user.id, updated.expertId));
       }
 
