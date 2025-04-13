@@ -2,7 +2,7 @@
 
 import useSWR from 'swr';
 import { fetcher } from '@/lib/utils';
-import { type ExpertRequest } from '@/lib/db/schema';
+import type { ExpertRequest } from '@/lib/db/schema';
 import { useEffect, useState } from 'react';
 import { UsersIcon, ClockIcon, CheckCircleIcon, TagIcon } from 'lucide-react';
 
@@ -85,7 +85,7 @@ export function ExpertRequestStatus({ chatId, isExpertRequestPending = false }: 
       <div className="p-2">
         <div className="mb-2 p-3 rounded-lg border bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 animate-pulse relative overflow-hidden">
           {/* Shimmering effect overlay */}
-          <div className="absolute inset-0 skeleton-shine bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+          <div className="absolute inset-0 skeleton-shine bg-gradient-to-r from-transparent via-white/20 to-transparent" />
           
           <div className="flex justify-between items-center mb-2">
             <div className="text-sm font-medium text-blue-600 dark:text-blue-400 flex items-center gap-1">
@@ -100,9 +100,9 @@ export function ExpertRequestStatus({ chatId, isExpertRequestPending = false }: 
           
           {/* Loading skeleton for tags */}
           <div className="mb-2 flex flex-wrap gap-1">
-            <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-            <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-            <div className="h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+            <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded-full" />
+            <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded-full" />
+            <div className="h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded-full" />
           </div>
           
           <div className="flex items-center gap-2 text-blue-600/80 dark:text-blue-400/80 text-xs mt-2">
@@ -121,7 +121,7 @@ export function ExpertRequestStatus({ chatId, isExpertRequestPending = false }: 
   // Apply real-time counts to the expert requests
   const processedRequests = expertRequests.map(request => {
     // If we have real-time counts from the API, use them
-    if (requestCounts && requestCounts[request.id]) {
+    if (requestCounts?.[request.id]) {
       const counts = requestCounts[request.id];
       return {
         ...request,

@@ -1,7 +1,15 @@
 import { auth } from '@/app/(auth)/auth';
 import { db } from '@/lib/db';
-import { expertRequest, expertAssignment } from '@/lib/db/schema';
+import { expertAssignment } from '@/lib/db/schema';
 import { eq, and, count, or } from 'drizzle-orm';
+
+// Define interface for request counts
+interface RequestCounts {
+  [requestId: string]: {
+    assignedCount: number;
+    completedCount: number;
+  };
+}
 
 export async function GET(request: Request) {
   try {
@@ -22,7 +30,7 @@ export async function GET(request: Request) {
     }
 
     // Create a map to store counts for each expert request
-    const counts = {};
+    const counts: RequestCounts = {};
 
     // Get completion counts for each request ID
     for (const requestId of requestIds) {

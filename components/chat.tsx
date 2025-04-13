@@ -2,7 +2,7 @@
 
 import type { Attachment, UIMessage } from 'ai';
 import { useChat } from '@ai-sdk/react';
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 import { ChatHeader } from '@/components/chat-header';
 import type { Vote } from '@/lib/db/schema';
@@ -18,7 +18,7 @@ import { getChatHistoryPaginationKey } from './sidebar-history';
 import { ExpertRequestStatus } from './expert-request-status';
 import { ExpertResponse } from './expert-response';
 import { UsersIcon } from 'lucide-react';
-import type { UseChatHelpers } from '@ai-sdk/react';
+import { useSearchParams } from 'next/navigation';
 
 export function Chat({
   id,
@@ -40,6 +40,7 @@ export function Chat({
   const [expertMode, setExpertMode] = useState(false);
   const [animating, setAnimating] = useState(false);
   const [isExpertRequestPending, setIsExpertRequestPending] = useState(false);
+  const searchParams = useSearchParams();
 
   const {
     messages,
@@ -68,6 +69,22 @@ export function Chat({
       toast.error('An error occurred, please try again!');
     },
   });
+
+  // Initialize expertMode from URL parameters
+  useEffect(() => {
+    const expertModeParam = searchParams.get('expertMode');
+    const queryParam = searchParams.get('query');
+    
+    if (expertModeParam === 'true') {
+      setExpertMode(true);
+      // Optional: show a toast to indicate community mode is active
+    }
+    
+    // Set the initial input from the query parameter if available
+    if (queryParam) {
+      setInput(queryParam);
+    }
+  }, [searchParams, setInput]);
 
   // Use SWR to fetch expert requests to help determine when to clear the pending state
   const { data: expertRequests } = useSWR(
@@ -105,7 +122,7 @@ export function Chat({
         setAnimating(false);
       }, 300);
     }, 150);
-    toast.success(expertMode ? 'AI mode activated' : 'Community mode activated');
+    // toast.success(expertMode ? 'AI mode activated' : 'Community mode activated');
   };
 
   // Custom submit handler that immediately shows the pending state
@@ -153,7 +170,7 @@ export function Chat({
             <div className="flex-1 p-2 px-4 h-12 flex items-center transition-all duration-300">
               <div className="max-w-3xl mx-auto flex items-center justify-between w-full">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                  <div className="size-2 rounded-full bg-blue-500" />
                   <span className="text-sm text-white font-medium flex items-center gap-2">
                     <UsersIcon size={14} className="text-blue-300" />
                     Ask the community
@@ -188,18 +205,18 @@ export function Chat({
                 type="button"
                 onClick={handleExpertModeToggle}
                 className={`p-2 rounded-2xl relative overflow-hidden ${
-                  expertMode ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
+                  expertMode ? 'bg-blue-900/20 border  border-blue-200 dark:border-blue-700 hover:bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'
                 } focus:outline-none transition-colors w-16`}
                 title={expertMode ? "Switch to AI" : "Ask community"}
                 disabled={animating}
               >
-                <div className={`relative w-5 h-5 mx-auto ${animating ? 'animate-pulse' : ''}`}>
+                <div className={`relative size-5 mx-auto ${animating ? 'animate-pulse' : ''}`}>
                   {/* AI icon */}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
                     fill="currentColor"
-                    className={`w-5 h-5 absolute top-0 left-0 transition-opacity duration-300 ${
+                    className={`size-5 absolute top-0 left-0 transition-opacity duration-300 ${
                       expertMode ? 'opacity-0' : 'opacity-100'
                     } ${animating ? 'scale-110' : 'scale-100'} transition-transform`}
                   >
@@ -211,7 +228,7 @@ export function Chat({
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
                     fill="currentColor"
-                    className={`w-5 h-5 absolute top-0 left-0 transition-opacity duration-300 ${
+                    className={`size-5 absolute top-0 left-0 transition-opacity duration-300 ${
                       expertMode ? 'opacity-100' : 'opacity-0'
                     } ${animating ? 'scale-110' : 'scale-100'} transition-transform`}
                   >

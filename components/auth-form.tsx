@@ -6,7 +6,6 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
-import { ALL_EXPERTISE_TAGS } from '@/lib/constants';
 import { Spinner } from './ui/spinner';
 
 export function AuthForm({
@@ -154,7 +153,7 @@ export function AuthForm({
           
           {isLoadingTags && (
             <div className="mt-2 flex items-center">
-              <Spinner size="small" />
+              <Spinner size="sm" />
               <span className="ml-2 text-xs text-zinc-500">Generating expertise tags...</span>
             </div>
           )}
@@ -181,7 +180,7 @@ export function AuthForm({
           )}
           
           <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
-            We'll use this to personalize your experience and suggest relevant questions best suited for you.
+            We&apos;ll use this to personalize your experience and suggest relevant questions best suited for you.
           </p>
         </div>
       )}

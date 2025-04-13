@@ -1,6 +1,7 @@
 import type { Message } from 'ai';
 import { useSWRConfig } from 'swr';
 import { useCopyToClipboard } from 'usehooks-ts';
+import { useRouter } from 'next/navigation';
 
 import type { Vote } from '@/lib/db/schema';
 
@@ -16,6 +17,7 @@ import { memo } from 'react';
 import equal from 'fast-deep-equal';
 import { toast } from 'sonner';
 import { UsersIcon } from 'lucide-react';
+import { generateUUID } from '@/lib/utils';
 
 export function PureMessageActions({
   chatId,
@@ -36,6 +38,7 @@ export function PureMessageActions({
 }) {
   const { mutate } = useSWRConfig();
   const [_, copyToClipboard] = useCopyToClipboard();
+  const router = useRouter();
 
   if (isLoading) return null;
   if (message.role === 'user') return null;
@@ -94,8 +97,22 @@ export function PureMessageActions({
           
           // Set the input outside this function since state updates are batched
           if (userContent) {
-            // Need to use setTimeout to ensure this runs after the current execution
-            setTimeout(() => setInput(userContent), 0);
+            // Generate a new chat UUID
+            const newChatId = generateUUID();
+            
+            // Redirect to a new chat with the new UUID
+            setTimeout(() => {
+              // Set expert mode
+              setExpertMode(true);
+              
+              // Set the input with the user's question
+              setInput(userContent);
+              
+              // Redirect to home page with the new UUID, expertMode parameter, and query
+              router.push(`/?id=${newChatId}&expertMode=true&query=${encodeURIComponent(userContent)}`);
+              
+              // Show success toast
+            }, 0);
           }
         }
       }
@@ -103,11 +120,6 @@ export function PureMessageActions({
       // Return empty array to clear all messages
       return [];
     });
-    
-    // Turn on community mode
-    setExpertMode(true);
-    
-    toast.success('Community mode activated');
   };
 
   return (
@@ -131,7 +143,7 @@ export function PureMessageActions({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              className="py-1 px-2 h-fit text-muted-foreground"
+              className="py-2 px-2 h-fit text-muted-foreground"
               variant="outline"
               onClick={async () => {
                 if (!textFromParts) {
@@ -153,7 +165,7 @@ export function PureMessageActions({
           <TooltipTrigger asChild>
             <Button
               data-testid="message-upvote"
-              className="py-1 px-2 h-fit text-muted-foreground !pointer-events-auto"
+              className="py-2 px-2 h-fit text-muted-foreground !pointer-events-auto"
               disabled={vote?.isUpvoted}
               variant="outline"
               onClick={async () => {

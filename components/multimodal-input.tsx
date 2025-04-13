@@ -21,10 +21,8 @@ import { ClockIcon } from 'lucide-react';
 import { PreviewAttachment } from './preview-attachment';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
-import { SuggestedActions } from './suggested-actions';
 import equal from 'fast-deep-equal';
 import type { UseChatHelpers } from '@ai-sdk/react';
-import { generateUUID } from '@/lib/utils';
 
 function PureMultimodalInput({
   chatId,

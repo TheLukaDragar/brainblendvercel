@@ -2,8 +2,6 @@
 
 import type { User } from 'next-auth';
 import { useRouter } from 'next/navigation';
-
-import { PlusIcon } from '@/components/icons';
 import { SidebarHistory } from '@/components/sidebar-history';
 import { SidebarUserNav } from '@/components/sidebar-user-nav';
 import { Button } from '@/components/ui/button';
@@ -18,7 +16,7 @@ import {
 import Link from 'next/link';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { ExpertAssignments } from './expert-assignments';
-import { Database, Plus, Users } from 'lucide-react';
+import { Database, Plus, } from 'lucide-react';
 
 export function AppSidebar({ user }: { user: User | undefined }) {
   const router = useRouter();
@@ -52,7 +50,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                     router.refresh();
                   }}
                 >
-                  <Plus className="h-5 w-5" />
+                  <Plus className="size-5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent align="end">New Chat</TooltipContent>
@@ -68,7 +66,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
               onClick={() => setOpenMobile(false)}
               className="flex items-center space-x-2 px-2 py-1.5 rounded-md hover:bg-muted text-sm"
             >
-              <Database className="h-4 w-4" />
+              <Database className="size-4" />
               <span>Community Dataset</span>
             </Link>
           </div>

@@ -40,7 +40,7 @@ export default function Page() {
       setIsSuccessful(true);
       router.refresh();
     }
-  }, [state]);
+  }, [state, router]);
 
   const handleSubmit = (formData: FormData) => {
     setEmail(formData.get('email') as string);
@@ -66,7 +66,7 @@ export default function Page() {
               Tailored Experience
             </h4>
             <p className="text-xs text-blue-600 dark:text-blue-300">
-              Tell us about your expertise so we can personalize your experience and suggest relevant content. We'll use this to generate tags that match your skills.
+              Tell us about your expertise so we can personalize your experience and suggest relevant content. We&apos;ll use this to generate tags that match your skills.
             </p>
           </div>
         </div>

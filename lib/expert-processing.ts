@@ -5,11 +5,11 @@ import {
   saveMessages, 
   acceptSubmittedAssignmentsByRequestId
 } from './db/queries';
-import { ExpertRequest, ExpertAssignment, type DBMessage } from './db/schema';
+import type { ExpertAssignment, DBMessage } from './db/schema';
 import { z } from 'zod';
 import { streamObject, embed } from 'ai';
 import { myProvider } from '@/lib/ai/providers';
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 import { db } from './db';
 import { expertAssignment } from './db/schema';
 import { eq } from 'drizzle-orm';
@@ -142,7 +142,7 @@ Always return a complete response in the 'synthesizedResponse' field, formatted 
     }
 
     if (finalObject) {
-      console.log("Synthesized Response (LLM):", finalObject.synthesizedResponse.substring(0, 200) + "...");
+      console.log("Synthesized Response (LLM):", `${finalObject.synthesizedResponse.substring(0, 200)}...`);
       console.log("----------------------------------------");
       return finalObject.synthesizedResponse;
     } else {

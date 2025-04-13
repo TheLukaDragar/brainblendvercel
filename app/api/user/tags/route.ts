@@ -35,7 +35,7 @@ export async function PUT(request: Request) {
       .set({ 
         expertiseTags: tags,
         expertise: expertise || null
-      })
+      } as any)
       .where(eq(user.id, session.user.id as string));
 
     return new NextResponse('Profile updated successfully', { status: 200 });

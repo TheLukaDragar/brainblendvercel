@@ -1,5 +1,5 @@
 import {
-  UIMessage,
+  type UIMessage,
   appendResponseMessages,
   createDataStreamResponse,
   smoothStream,
@@ -12,12 +12,10 @@ import { systemPrompt } from '@/lib/ai/prompts';
 import {
   deleteChatById,
   getChatById,
-  getExpertRequestsByChat,
   saveChat,
   saveMessages,
   saveExpertRequest,
   assignExpertToRequest,
-  getUser,
   getAllExperts,
   getRelevantExpertAnswers,
 } from '@/lib/db/queries';

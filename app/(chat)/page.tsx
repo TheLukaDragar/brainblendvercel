@@ -5,8 +5,13 @@ import { DEFAULT_CHAT_MODEL } from '@/lib/ai/models';
 import { generateUUID } from '@/lib/utils';
 import { DataStreamHandler } from '@/components/data-stream-handler';
 
-export default async function Page() {
-  const id = generateUUID();
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: { id?: string } | any;
+}) {
+  // Use the provided ID from the query parameter if it exists, otherwise generate a new one
+  const id = searchParams.id || generateUUID();
 
   const cookieStore = await cookies();
   const modelIdFromCookie = cookieStore.get('chat-model');

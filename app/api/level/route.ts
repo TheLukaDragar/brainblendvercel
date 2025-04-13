@@ -12,8 +12,8 @@ export async function GET(request: Request) {
         );
     }
 
-    const xpNumber = parseInt(xp, 10);
-    if (isNaN(xpNumber)) {
+    const xpNumber = Number.parseInt(xp, 10);
+    if (Number.isNaN(xpNumber)) {
         return NextResponse.json(
             { error: 'XP must be a valid number' },
             { status: 400 }

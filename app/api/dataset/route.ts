@@ -1,7 +1,7 @@
-import { auth } from '@/app/(auth)/auth';
+
 import { db } from '@/lib/db';
 import { expertAssignment, expertRequest, user } from '@/lib/db/schema';
-import { and, eq, count } from 'drizzle-orm';
+import { eq, count } from 'drizzle-orm';
 
 export async function GET() {
   try {

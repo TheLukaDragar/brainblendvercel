@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { streamObject } from 'ai';
 import { z } from 'zod';
 import { myProvider } from '@/lib/ai/providers';
@@ -53,9 +53,9 @@ Generate a list of 10-20 most relevant tags.`,
     });
     
     // Process the response stream
-    let finalObject = { tags: [] as string[] };
+    const finalObject = { tags: [] as string[] };
     for await (const partialObject of result.partialObjectStream) {
-      if (partialObject && partialObject.tags) {
+      if (partialObject?.tags) {
         // Filter out any undefined values from the array
         finalObject.tags = (partialObject.tags || []).filter(Boolean) as string[];
       }

@@ -26,10 +26,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MessageSquare, Search, Users, User, ExternalLink } from 'lucide-react';
+import { Search, Users, User, } from 'lucide-react';
 
 type DatasetEntry = {
   assignment: {
@@ -105,7 +103,7 @@ export function DatasetTable() {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Community Dataset</h2>
         <div className="relative w-80">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2 top-2.5 size-4 text-muted-foreground" />
           <Input
             placeholder="Search dataset..."
             className="pl-8"
@@ -189,7 +187,7 @@ export function DatasetTable() {
                   </TableCell>
                   <TableCell className="py-5">
                     <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-blue-600" />
+                      <User className="size-4 text-blue-600" />
                       <span className="truncate max-w-[140px] text-base">
                         {entry.expert.email.split('@')[0]}
                       </span>
@@ -197,7 +195,7 @@ export function DatasetTable() {
                   </TableCell>
                   <TableCell className="py-5">
                     <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4 text-blue-600" />
+                      <Users className="size-4 text-blue-600" />
                       <span className="text-base font-medium">
                         {entry.request.submittedExpertsCount || 1}
                       </span>

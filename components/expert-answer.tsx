@@ -1,12 +1,12 @@
 'use client';
 
 import type { UIMessage } from 'ai';
-import { useState, useEffect } from 'react';
+import { useState, } from 'react';
 import useSWR from 'swr';
 import ReactConfetti from 'react-confetti';
 import { useWindowSize } from '@react-hook/window-size';
 import { ChatHeader } from '@/components/chat-header';
-import type { Vote, ExpertAssignment } from '@/lib/db/schema';
+import type { ExpertAssignment } from '@/lib/db/schema';
 import { fetcher } from '@/lib/utils';
 import type { VisibilityType } from './visibility-selector';
 import { toast } from 'sonner';
@@ -20,7 +20,6 @@ import {
   ClockIcon, 
   UserIcon,
   SparklesIcon,
-  BotIcon,
   GiftIcon,
 } from 'lucide-react';
 import { ArrowUpIcon } from './icons';
@@ -344,7 +343,7 @@ export function ExpertAnswer({
           />
           <div className="flex-1 p-4 px-4 h-16 flex items-center transition-colors duration-300">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-purple-400"></div>
+              <div className="w-2 h-2 rounded-full bg-purple-400" />
               <span className="text-sm text-white font-medium flex items-center gap-2">
                 <UsersIcon size={16} className="text-purple-300" />
                 Community Experts
@@ -386,7 +385,7 @@ export function ExpertAnswer({
           />
           <div className="flex-1 p-4 px-4 h-16 flex items-center justify-between transition-colors duration-300">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full dark:bg-purple-900/30"></div>
+              <div className="w-2 h-2 rounded-full dark:bg-purple-900/30" />
               <span className="text-sm text-purple-200 font-medium flex items-center gap-2">
                 <UsersIcon size={16} className="text-purple-300" />
                 Answer this question
@@ -457,19 +456,19 @@ export function ExpertAnswer({
                 <h4 className="font-medium text-md text-blue-700 dark:text-blue-300 mb-1">Expert Response Guidelines</h4>
                 <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm text-blue-600/90 dark:text-blue-400/90">
                   <li className="flex items-center gap-1.5">
-                    <div className="size-1 rounded-full bg-blue-400 dark:bg-blue-500"></div>
+                    <div className="size-1 rounded-full bg-blue-400 dark:bg-blue-500" />
                     Be concise and accurate
                   </li>
                   <li className="flex items-center gap-1.5">
-                    <div className="size-1 rounded-full bg-blue-400 dark:bg-blue-500"></div>
+                    <div className="size-1 rounded-full bg-blue-400 dark:bg-blue-500" />
                     Include relevant examples
                   </li>
                   <li className="flex items-center gap-1.5">
-                    <div className="size-1 rounded-full bg-blue-400 dark:bg-blue-500"></div>
+                    <div className="size-1 rounded-full bg-blue-400 dark:bg-blue-500" />
                     Use markdown for formatting
                   </li>
                   <li className="flex items-center gap-1.5">
-                    <div className="size-1 rounded-full bg-blue-400 dark:bg-blue-500"></div>
+                    <div className="size-1 rounded-full bg-blue-400 dark:bg-blue-500" />
                     Press Enter to submit
                   </li>
                 </ul>

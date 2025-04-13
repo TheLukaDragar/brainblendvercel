@@ -1,5 +1,4 @@
 import { DatasetTable } from '@/components/dataset-table';
-import { DEFAULT_CHAT_MODEL } from '@/lib/ai/models';
 
 export const metadata = {
   title: 'Dataset - Brain Blend',

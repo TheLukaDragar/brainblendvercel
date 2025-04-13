@@ -2,9 +2,8 @@
 import useSWR from 'swr';
 import { fetcher } from '@/lib/utils';
 import { useRouter, usePathname } from 'next/navigation';
-import { Button } from './ui/button';
-import { useState, useEffect } from 'react';
-import { ChevronDownIcon, ChevronRightIcon, UsersIcon, MessageCircleIcon, CheckIcon, XIcon, ClockIcon } from 'lucide-react';
+import { useEffect } from 'react';
+import { UsersIcon, MessageCircleIcon, CheckIcon, XIcon, ClockIcon } from 'lucide-react';
 
 type ExpertAssignmentWithRequest = {
   assignment: {
@@ -133,7 +132,7 @@ export function ExpertAssignments() {
           <UsersIcon size={14} className="text-blue-500" />
           <span>Community questions</span>
         </div>
-        <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-4 w-4 rounded-full"></div>
+        <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-4 w-4 rounded-full" />
       </div>
     );
   }
@@ -152,7 +151,7 @@ export function ExpertAssignments() {
   // Process assignments and apply real-time counts from the API
   const assignments = rawAssignments ? rawAssignments.map(item => {
     // If we have real-time counts, use them
-    if (requestCounts && requestCounts[item.request.id]) {
+    if (requestCounts?.[item.request.id]) {
       const counts = requestCounts[item.request.id];
       return {
         ...item,
@@ -323,7 +322,7 @@ function AssignmentItem({
               <div 
                 className="bg-purple-500 h-1.5 rounded-full" 
                 style={{ width: `${(completedCount / totalExperts) * 100}%` }}
-              ></div>
+              />
             </div>
           )}
         </div>

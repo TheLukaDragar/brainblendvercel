@@ -1,4 +1,4 @@
-import { Chat } from '@/lib/db/schema';
+import type { Chat } from '@/lib/db/schema';
 import {
   SidebarMenuAction,
   SidebarMenuButton,
@@ -23,7 +23,7 @@ import {
   ShareIcon,
   TrashIcon,
 } from './icons';
-import { memo, useEffect, useState } from 'react';
+import { memo, } from 'react';
 import { useChatVisibility } from '@/hooks/use-chat-visibility';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/utils';

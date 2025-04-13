@@ -1,6 +1,6 @@
 import { auth } from '@/app/(auth)/auth';
 import { getExpertAssignmentsByExpert } from '@/lib/db/queries';
-import { expertRequest, expertAssignment } from '@/lib/db/schema';
+import { expertAssignment } from '@/lib/db/schema';
 import { eq, and, count, or } from 'drizzle-orm';
 import { db } from '@/lib/db';
 

@@ -2,7 +2,6 @@ import { auth } from '@/app/(auth)/auth';
 import { myProvider } from '@/lib/ai/providers';
 import { z } from 'zod';
 import { streamObject } from 'ai';
-import { handleWebpackExternalForEdgeRuntime } from 'next/dist/build/webpack/plugins/middleware-plugin';
 
 // Define the assessment schema
 const assessmentSchema = z.object({
@@ -64,9 +63,9 @@ export async function POST(
     // Enhanced debugging
     console.log('Quality assessment request:');
     console.log('- Question length:', question ? question.length : 0);
-    console.log('- Question excerpt:', question ? question.substring(0, 100) + '...' : 'MISSING');
+    console.log('- Question excerpt:', question ? `${question.substring(0, 100)}...` : 'MISSING');
     console.log('- Response length:', response ? response.length : 0);
-    console.log('- Response excerpt:', response ? response.substring(0, 100) + '...' : 'MISSING');
+    console.log('- Response excerpt:', response ? `${response.substring(0, 100)}...` : 'MISSING');
     
     // Improved error handling with specific error messages
     const errors = [];
@@ -127,7 +126,7 @@ Finally, provide an overall score out of 100 and suggest 1-3 ways the response c
       });
 
       // Create our final assessment object
-      let finalAssessment = { ...defaultAssessment };
+      const finalAssessment = { ...defaultAssessment };
       
       // Process the stream of partial objects
       for await (const partialObject of result.partialObjectStream) {

@@ -5,11 +5,9 @@ import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
 import { 
-  UsersIcon, 
   SendIcon, 
   Loader2Icon, 
   ClockIcon, 
-  BookmarkIcon, 
   AlertCircleIcon, 
   UserIcon, 
   BotIcon 
@@ -166,7 +164,7 @@ export function ExpertResponse({
     
     return (
       <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground border-b border-border mb-4">
-        <div className={`w-2 h-2 rounded-full ${statusConfig.color} ${status === 'assigned' || status === 'working' ? 'animate-pulse' : ''}`}></div>
+        <div className={`w-2 h-2 rounded-full ${statusConfig.color} ${status === 'assigned' || status === 'working' ? 'animate-pulse' : ''}`} />
         <span>{statusConfig.text}</span>
       </div>
     );
