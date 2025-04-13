@@ -1,10 +1,12 @@
 'use client';
 
 import type { UIMessage } from 'ai';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useSWR from 'swr';
+import ReactConfetti from 'react-confetti';
+import { useWindowSize } from '@react-hook/window-size';
 import { ChatHeader } from '@/components/chat-header';
-import type { Vote } from '@/lib/db/schema';
+import type { Vote, ExpertAssignment } from '@/lib/db/schema';
 import { fetcher } from '@/lib/utils';
 import type { VisibilityType } from './visibility-selector';
 import { toast } from 'sonner';
@@ -19,11 +21,21 @@ import {
   UserIcon,
   SparklesIcon,
   BotIcon,
+  GiftIcon,
 } from 'lucide-react';
 import { ArrowUpIcon } from './icons';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { Spinner } from './ui/spinner';
+import { StarIcon } from '@heroicons/react/24/solid';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 // Custom animation classes for slower pulsing
 const customAnimationStyles = `
@@ -52,17 +64,9 @@ type QualityAssessment = {
   passesThreshold: boolean;
 };
 
+// Add credits awarded to the assignment type
 type ExpertAssignmentWithRequest = {
-  assignment: {
-    id: string;
-    expertRequestId: string;
-    expertId: string;
-    status: string;
-    response?: string;
-    rating?: string;
-    createdAt: string;
-    updatedAt: string;
-  };
+  assignment: ExpertAssignment & { creditsAwarded?: number | null };
   request: {
     id: string;
     chatId: string;
@@ -90,6 +94,11 @@ export function ExpertAnswer({
   const [isAssessing, setIsAssessing] = useState(false);
   const [assessment, setAssessment] = useState<QualityAssessment | null>(null);
   const [showAssessment, setShowAssessment] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [awardedCredits, setAwardedCredits] = useState<number | null>(null);
+  const [showThankYouModal, setShowThankYouModal] = useState(false);
+
+  const [width = 0, height = 0] = useWindowSize();
 
   // Get user question from initialMessages
   const userMessage = initialMessages.find(msg => msg.role === 'user');
@@ -185,14 +194,23 @@ export function ExpertAnswer({
         body: JSON.stringify({
           status: 'submitted',
           response: response,
+          creditsAwarded: 1, // Award a fixed 1 credit
         }),
       });
       
       if (!responseObj.ok) {
         throw new Error('Failed to submit response');
       }
+
+      const credits = 1; // Fixed 1 credit
+      setAwardedCredits(credits);
       
-      toast.success('Your expert response has been submitted');
+      // Show confetti, success message, and modal
+      setShowConfetti(true);
+      toast.success(`Your expert response has been submitted! You earned 1 credit!`);
+      setShowThankYouModal(true);
+      setTimeout(() => setShowConfetti(false), 6000);
+
       // Reset assessment display
       setShowAssessment(false);
       // Refresh data
@@ -202,7 +220,7 @@ export function ExpertAnswer({
         .then(res => res.json())
         .then(() => {
           // Force a refresh of the SWR cache
-          mutate('/api/expert-assignments');
+          mutate();
         });
     } catch (error) {
       toast.error('Failed to submit response');
@@ -300,7 +318,7 @@ export function ExpertAnswer({
         .then(res => res.json())
         .then(() => {
           // Force a refresh of the SWR cache
-          mutate('/api/expert-assignments');
+          mutate();
         });
     } catch (error) {
       toast.error('Failed to update status');
@@ -311,7 +329,7 @@ export function ExpertAnswer({
   };
 
   // Helper for mutate
-  const { mutate } = useSWR('/api/expert-assignments');
+  const { mutate } = useSWR<ExpertAssignmentWithRequest[]>('/api/expert-assignments');
 
   // Loading state
   if (isValidating && !expertAssignments) {
@@ -346,8 +364,19 @@ export function ExpertAnswer({
   const assignmentStatus = currentAssignment?.assignment.status || 'not_assigned';
 
   return (
-    <div className="flex flex-col min-w-0 h-dvh bg-background">
-      <header className="flex sticky top-0 border-t border-b border-indigo-900 py-1.5 items-center px-2 md:px-2 gap-2">
+    <div className="flex flex-col min-w-0 h-dvh bg-background relative">
+      {showConfetti && (
+        <ReactConfetti
+          width={width}
+          height={height}
+          recycle={false}
+          numberOfPieces={500}
+          tweenDuration={5000}
+          className="absolute top-0 left-0 w-full h-full z-50 pointer-events-none"
+        />
+      )}
+
+      <div className="flex items-center">
         <ChatHeader
           chatId={id}
           selectedModelId={selectedChatModel}
@@ -515,6 +544,25 @@ export function ExpertAnswer({
                           <div className="whitespace-pre-wrap">
                             {currentAssignment.assignment.response}
                           </div>
+                          {currentAssignment.assignment.rating && (
+                            <div className="mt-2 flex items-center gap-0.5">
+                              {[...Array(5)].map((_, i) => (
+                                <StarIcon
+                                  key={i}
+                                  className={`h-4 w-4 ${
+                                    i < (Number(currentAssignment.assignment.rating) || 0)
+                                      ? 'text-yellow-400'
+                                      : 'text-gray-300 dark:text-gray-600'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          )}
+                          {currentAssignment.assignment.creditsAwarded !== null && currentAssignment.assignment.creditsAwarded !== undefined && (
+                            <div className="mt-1 text-xs text-primary-foreground/80">
+                              Credits Awarded: {currentAssignment.assignment.creditsAwarded}
+                            </div>
+                          )}
                         </div>
                         <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border bg-background">
                           <div className="translate-y-px">
@@ -644,7 +692,7 @@ export function ExpertAnswer({
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-6 h-auto text-base font-medium"
                 >
                   {isLoading ? <Loader2Icon className="h-5 w-5 animate-spin mr-2" /> : <UsersIcon className="h-5 w-5 mr-2" />}
-                  Start Working on This Request
+                  i'll answer
                 </Button>
       </div>
             ) : (
@@ -700,6 +748,28 @@ export function ExpertAnswer({
           </div>
         </div>
       )}
+
+      {/* Thank You Modal */}
+      <Dialog open={showThankYouModal} onOpenChange={setShowThankYouModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl font-bold text-green-600">Thank You!</DialogTitle>
+            <DialogDescription className="text-center pt-2">
+              Your expert response has been successfully submitted.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-6 flex flex-col items-center justify-center space-y-3">
+            <GiftIcon className="w-16 h-16 text-yellow-500" />
+            <p className="text-lg font-medium">You earned {awardedCredits || 1} credit!</p>
+            <p className="text-sm text-muted-foreground">Keep up the great work!</p>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShowThankYouModal(false)} className="w-full bg-green-600 hover:bg-green-700">
+              Awesome!
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

@@ -18,6 +18,8 @@ export const user = pgTable('User', {
   password: varchar('password', { length: 64 }),
   expertise: text('expertise'),
   expertiseTags: json('expertiseTags').$type<string[]>().default([]),
+  expertiseTagsEmbedding: json('expertiseTagsEmbedding').$type<number[] | null>().default(null),
+  credits: integer('credits').default(0).notNull(),
 });
 
 export type User = InferSelectModel<typeof user>;
@@ -185,7 +187,8 @@ export const expertAssignment = pgTable('ExpertAssignment', {
     .notNull()
     .default('assigned'),
   response: text('response'),
-  rating: varchar('rating', { enum: ['1', '2', '3', '4', '5'] }),
+  rating: integer('rating'),
+  creditsAwarded: integer('creditsAwarded'),
   createdAt: timestamp('createdAt').notNull(),
   updatedAt: timestamp('updatedAt').notNull(),
 });

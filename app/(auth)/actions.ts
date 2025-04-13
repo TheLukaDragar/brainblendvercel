@@ -4,6 +4,8 @@ import { z } from 'zod';
 
 import { createUser, getUser } from '@/lib/db/queries';
 import { extractExpertiseTags } from '@/lib/constants';
+import { embed } from 'ai';
+import { myProvider } from '@/lib/ai/providers';
 
 import { signIn } from './auth';
 
@@ -86,11 +88,28 @@ export const register = async (
       expertiseTags = extractExpertiseTags(validatedData.expertise);
     }
 
+    // Generate embedding for the expertise tags
+    let embeddingVector: number[] | null = null;
+    if (expertiseTags.length > 0) {
+        try {
+            const tagsString = expertiseTags.join(', ');
+            const { embedding } = await embed({
+                model: myProvider.textEmbeddingModel('text-embedding-3-small'),
+                value: tagsString,
+            });
+            embeddingVector = embedding;
+        } catch (error) {
+            console.error("Failed to generate embedding during registration:", error);
+            // Proceed without embedding if generation fails
+        }
+    }
+
     await createUser(
-      validatedData.email, 
-      validatedData.password, 
+      validatedData.email,
+      validatedData.password,
       validatedData.expertise,
-      expertiseTags
+      expertiseTags,
+      embeddingVector
     );
     
     await signIn('credentials', {

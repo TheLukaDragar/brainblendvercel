@@ -1,9 +1,12 @@
 'use client';
 import { ChevronUp } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import type { User } from 'next-auth';
 import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import {
   DropdownMenu,
@@ -20,6 +23,25 @@ import {
 
 export function SidebarUserNav({ user }: { user: User }) {
   const { setTheme, theme } = useTheme();
+  const [credits, setCredits] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchCredits = async () => {
+      try {
+        const response = await fetch('/api/user/profile');
+        if (!response.ok) {
+          throw new Error('Failed to fetch user data');
+        }
+        const userData = await response.json();
+        setCredits(userData.credits || 0);
+      } catch (error) {
+        console.error('Error fetching user credits:', error);
+        toast.error('Failed to load user credits');
+      }
+    };
+
+    fetchCredits();
+  }, []);
 
   return (
     <SidebarMenu>
@@ -34,7 +56,9 @@ export function SidebarUserNav({ user }: { user: User }) {
                 height={24}
                 className="rounded-full"
               />
-              <span className="truncate">{user?.email}</span>
+              <div className="flex items-center gap-2">
+                <span className="truncate">{user?.email} ({credits} credits)</span>
+              </div>
               <ChevronUp className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
@@ -49,6 +73,11 @@ export function SidebarUserNav({ user }: { user: User }) {
               {`Toggle ${theme === 'light' ? 'dark' : 'light'} mode`}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/profile" className="cursor-pointer">
+                Your profile
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <button
                 type="button"

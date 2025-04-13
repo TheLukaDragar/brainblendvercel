@@ -2,6 +2,7 @@ import { auth } from '@/app/(auth)/auth';
 import { myProvider } from '@/lib/ai/providers';
 import { z } from 'zod';
 import { streamObject } from 'ai';
+import { handleWebpackExternalForEdgeRuntime } from 'next/dist/build/webpack/plugins/middleware-plugin';
 
 // Define the assessment schema
 const assessmentSchema = z.object({
@@ -57,6 +58,8 @@ export async function POST(
     // Get the request body with question and response
     const body = await request.json();
     const { question, response } = body;
+
+        
     
     // Enhanced debugging
     console.log('Quality assessment request:');
@@ -78,6 +81,8 @@ export async function POST(
       });
     }
 
+    
+
     // Default assessment to use as fallback and initial values
     const defaultAssessment: QualityAssessment = {
       accuracy: { score: 7, feedback: "Default evaluation" },
@@ -90,6 +95,13 @@ export async function POST(
       passesThreshold: true
     };
 
+
+    if (question.length < 10) {
+      return new Response(JSON.stringify(defaultAssessment), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     try {
       // Get the LLM model
       const qualityModel = myProvider.languageModel('chat-model');
@@ -98,19 +110,19 @@ export async function POST(
       const result = await streamObject({
         model: qualityModel,
         schema: assessmentSchema,
-        prompt: `Analyze the following expert response to a user question based on these criteria:
-- Accuracy: Is the information factually correct?
-- Completeness: Does it fully answer the question?
-- Clarity: Is the explanation clear and well-structured?
-- Helpfulness: Does it provide actionable advice?
-- Conciseness: Is it appropriately concise while being thorough?
+        prompt: `Please review the following expert response to a user question, considering these aspects:
+- Accuracy: How factually correct is the information presented?
+- Completeness: To what extent does the response address the user's question fully?
+- Clarity: How clear and well-structured is the explanation?
+- Helpfulness: How helpful and actionable is the advice provided?
+- Conciseness: Is the response concise while remaining thorough?
 
 Question: ${question}
 
 Expert Response: ${response}
 
-For each criterion, provide a score out of 10 and brief feedback.
-Then provide an overall score out of 100 and list 1-3 specific suggestions for improvement.`,
+For each aspect, please assign a score from 0 to 10 and offer brief constructive feedback.
+Finally, provide an overall score out of 100 and suggest 1-3 ways the response could potentially be enhanced.`,
         maxTokens: 1000,
       });
 

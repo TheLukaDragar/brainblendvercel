@@ -62,7 +62,7 @@ Available tags: ${ALL_EXPERTISE_TAGS.join(', ')}
 
 Chat conversation: "${chatContent}"
 
-Generate a list of 3-5 most relevant tags.`,
+Generate a list of 10-20 most relevant tags.`,
       maxTokens: 100,
     });
     

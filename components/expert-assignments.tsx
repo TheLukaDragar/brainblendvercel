@@ -98,12 +98,12 @@ export function ExpertAssignments() {
     );
   }
 
-  if (error || !rawAssignments || rawAssignments.length === 0) {
+  if (error) {
     return (
       <div className="flex items-center justify-between px-2 py-2 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <UsersIcon size={14} />
-          <span>No Assignments Yet</span>
+          <span>{error.message}</span>
         </div>
       </div>
     );
@@ -179,7 +179,7 @@ function AssignmentItem({
         return {
           color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300',
           icon: <ClockIcon size={12} />,
-          label: 'Awaiting Response'
+          label: 'Help Wanted'
         };
       case 'working':
         return {
