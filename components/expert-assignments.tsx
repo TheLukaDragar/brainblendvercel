@@ -120,7 +120,7 @@ export function ExpertAssignments() {
     <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
       <div className="flex items-center justify-between px-2 py-2 text-sm font-medium border-t border-border">
         <div className="flex items-center gap-2">
-          <UsersIcon size={14} className="text-blue-500" />
+          <UsersIcon size={14} className="text-purple-500" />
           <span>Community questions</span>
           {pendingCount > 0 && (
             <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs rounded-full font-medium">

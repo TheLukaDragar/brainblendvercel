@@ -83,7 +83,7 @@ export function Chat({
   return (
     <>
       <div className="flex flex-col min-w-0 h-dvh bg-background">
-        <div className={`flex items-center transition-colors duration-300 ${expertMode ? 'dark:bg-blue-900/20' : ''}`}>
+        <div className={`flex items-center transition-colors duration-300 ${expertMode ? 'dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800' : ''}`}>
           <header className="flex sticky top-0 py-1.5 items-center px-2 md:px-2 gap-2">
             <ChatHeader
               chatId={id}
@@ -99,7 +99,7 @@ export function Chat({
                   <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                   <span className="text-sm text-white font-medium flex items-center gap-2">
                     <UsersIcon size={14} className="text-blue-300" />
-                    Community Mode
+                    Ask the community
                   </span>
                 </div>
               </div>
