@@ -23,6 +23,7 @@ export async function GET() {
       .select({
         expertise: user.expertise,
         expertiseTags: user.expertiseTags,
+        credits: user.credits,
       })
       .from(user)
       .where(eq(user.id, session.user.id as string));
