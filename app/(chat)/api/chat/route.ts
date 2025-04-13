@@ -284,7 +284,7 @@ export async function POST(request: Request) {
             const relevantAnswers = await getRelevantExpertAnswers({
               query: userQuestionText,
               limit: 3,
-              similarityThreshold: 0.7,
+              similarityThreshold: 0.3,
             });
             
             console.timeEnd('[RAG] retrieval-time');
