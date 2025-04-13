@@ -96,7 +96,7 @@ export async function POST(
     };
 
 
-    if (question.length < 100) {
+    if (question.length < 30) {
       return new Response(JSON.stringify(defaultAssessment), {
         headers: { 'Content-Type': 'application/json' },
       });

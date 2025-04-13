@@ -89,15 +89,8 @@
     {
       "idx": 12,
       "version": "7",
-      "when": 1744501500000,
-      "tag": "0012_add_expertise_tags_to_chat",
-      "breakpoints": true
-    },
-    {
-      "idx": 13,
-      "version": "7",
-      "when": 1744502000000,
-      "tag": "0013_add_expertise_tags_to_expert_request",
+      "when": 1744505000000,
+      "tag": "0012_smooth_eternity",
       "breakpoints": true
     }
   ]

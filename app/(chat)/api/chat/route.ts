@@ -117,10 +117,28 @@ export async function POST(request: Request) {
 
     // If this is an expert request, create it and assign to experts
     if (isExpertRequest) {
-      // Extract the question from the user message
-      const questionText = Array.isArray(userMessage.parts) 
-        ? userMessage.parts.map(part => typeof part === 'string' ? part : '').join(' ')
-        : typeof userMessage.parts === 'string' ? userMessage.parts : '';
+      // Extract the question from the user message - properly handle structured parts
+      let questionText = '';
+      
+      if (Array.isArray(userMessage.parts)) {
+        // Process structured parts properly
+        questionText = userMessage.parts.map(part => {
+          if (typeof part === 'string') {
+            return part;
+          } else if (part && typeof part === 'object') {
+            // Handle text part type explicitly
+            if (part.type === 'text' && 'text' in part) {
+              return part.text as string;
+            }
+          }
+          return '';
+        }).join(' ').trim();
+      } else if (typeof userMessage.parts === 'string') {
+        questionText = userMessage.parts;
+      }
+      
+      // Log for debugging
+      console.log('Extracted question text:', questionText);
       
       // Extract expertise tags if not already done
       if (tags.length === 0) {
@@ -131,11 +149,16 @@ export async function POST(request: Request) {
       
       // Create the expert request
       const expertRequestId = generateUUID();
+      
+      // Don't override the LLM-generated title with the question text
+      // We'll use the title that was already generated earlier
+      
       const expertRequest = await saveExpertRequest({
         id: expertRequestId,
         chatId: id,
         question: questionText,
         expertiseTags: tags,
+        title: title,
       });
       
       // --- Semantic Matching Logic ---

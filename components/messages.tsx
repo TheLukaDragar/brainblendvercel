@@ -18,6 +18,8 @@ interface MessagesProps {
   isArtifactVisible: boolean;
   append: UseChatHelpers['append'];
   expertMode?: boolean;
+  setExpertMode?: (mode: boolean) => void;
+  setInput?: (input: string) => void;
 }
 
 function PureMessages({
@@ -30,6 +32,8 @@ function PureMessages({
   isReadonly,
   append,
   expertMode,
+  setExpertMode,
+  setInput,
 }: MessagesProps) {
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
@@ -55,6 +59,8 @@ function PureMessages({
           setMessages={setMessages}
           reload={reload}
           isReadonly={isReadonly}
+          setInput={setInput}
+          setExpertMode={setExpertMode}
         />
       ))}
 

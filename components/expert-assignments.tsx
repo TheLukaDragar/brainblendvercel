@@ -3,7 +3,7 @@ import useSWR from 'swr';
 import { fetcher } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { Button } from './ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronDownIcon, ChevronRightIcon, UsersIcon, MessageCircleIcon, CheckIcon, XIcon, ClockIcon } from 'lucide-react';
 
 type ExpertAssignmentWithRequest = {
@@ -27,6 +27,14 @@ type ExpertAssignmentWithRequest = {
     updatedAt: string;
     assignedExpertsCount: number;
     completedExpertsCount?: number;
+  };
+};
+
+// Type for the counts response
+type RequestCounts = {
+  [requestId: string]: {
+    assignedCount: number;
+    completedCount: number;
   };
 };
 
@@ -81,8 +89,40 @@ export function ExpertAssignments() {
   const { data: rawAssignments, error, isLoading } = useSWR<Array<ExpertAssignmentWithRequest>>(
     '/api/expert-assignments',
     fetcher,
-    { refreshInterval: 15000 } // Refresh every 15 seconds
+    { 
+      refreshInterval: 5000, // Refresh every 5 seconds
+      revalidateOnFocus: true 
+    }
   );
+  
+  // Get all unique request IDs
+  const requestIds = rawAssignments 
+    ? [...new Set(rawAssignments.map(a => a.request.id))]
+    : [];
+  
+  // Use our new API to get real-time counts for all requests
+  const { data: requestCounts, mutate: mutateCounts } = useSWR<RequestCounts>(
+    requestIds.length > 0 
+      ? `/api/expert-request-counts?requestIds=${requestIds.join(',')}` 
+      : null,
+    fetcher,
+    { 
+      refreshInterval: 3000, // Refresh every 3 seconds
+      revalidateOnFocus: true,
+      dedupingInterval: 1000
+    }
+  );
+  
+  // Force refresh the counts more aggressively
+  useEffect(() => {
+    if (requestIds.length === 0) return;
+    
+    const interval = setInterval(() => {
+      mutateCounts();
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, [mutateCounts, requestIds]);
   
   const router = useRouter();
 
@@ -109,8 +149,24 @@ export function ExpertAssignments() {
     );
   }
 
-  // Process assignments to add completed counts
-  const assignments = getCompletedExpertsCount(rawAssignments);
+  // Process assignments and apply real-time counts from the API
+  const assignments = rawAssignments ? rawAssignments.map(item => {
+    // If we have real-time counts, use them
+    if (requestCounts && requestCounts[item.request.id]) {
+      const counts = requestCounts[item.request.id];
+      return {
+        ...item,
+        request: {
+          ...item.request,
+          assignedExpertsCount: counts.assignedCount,
+          completedExpertsCount: counts.completedCount
+        }
+      };
+    }
+    
+    // Fallback to original data
+    return item;
+  }) : [];
 
   const pendingCount = assignments.filter(a => 
     a.assignment.status === 'assigned' || a.assignment.status === 'working'

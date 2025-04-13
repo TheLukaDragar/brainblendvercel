@@ -205,16 +205,14 @@ export async function processExpertResponses({
 
     let expertsAgree = false;
 
-   if( responseTexts.length > 1) {
-    // 4. Call the LLM to check for agreement
-    console.log(`[${expertRequestId}] Calling LLM to check agreement...`);
-    expertsAgree = await checkAgreementWithLLM(expertRequest.question, responseTexts);
-    console.log(`[${expertRequestId}] LLM agreement result: ${expertsAgree}`);
-    }
-
-    if( responseTexts.length === 1) {
-      console.log(`[${expertRequestId}] Only one response lets say we agree`);
-       expertsAgree = true;
+    if(responseTexts.length > 1) {
+      // 4. Call the LLM to check for agreement
+      console.log(`[${expertRequestId}] Calling LLM to check agreement...`);
+      expertsAgree = await checkAgreementWithLLM(expertRequest.question, responseTexts);
+      console.log(`[${expertRequestId}] LLM agreement result: ${expertsAgree}`);
+    } else if(responseTexts.length === 1) {
+      console.log(`[${expertRequestId}] Only one response, automatically agreeing`);
+      expertsAgree = true;
     }
 
     // 5. If they agree, synthesize, save message, update parent status, and accept submissions
