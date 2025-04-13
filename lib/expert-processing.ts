@@ -7,9 +7,12 @@ import {
 } from './db/queries';
 import { ExpertRequest, ExpertAssignment, type DBMessage } from './db/schema';
 import { z } from 'zod';
-import { streamObject } from 'ai';
+import { streamObject, embed } from 'ai';
 import { myProvider } from '@/lib/ai/providers';
 import { randomUUID } from 'crypto';
+import { db } from './db';
+import { expertAssignment } from './db/schema';
+import { eq } from 'drizzle-orm';
 
 // Define the schema for the agreement check
 const agreementSchema = z.object({
@@ -110,15 +113,21 @@ async function synthesizeExpertResponses(
     const result = await streamObject({
       model: synthesisModel,
       schema: synthesisSchema,
-      prompt: `The following expert responses have been deemed to be in agreement regarding the user's question. 
-Please synthesize them into a single, comprehensive, and well-rounded final answer. Combine the key insights and information accurately. Keep the wording of the original responses as much as possible.
+      prompt: `Your task is to synthesize expert responses into a helpful answer. 
+
+Even if the user's question or expert responses seem nonsensical, incomplete, or unclear, you must provide a synthesized response that:
+1. Acknowledges what was provided
+2. Creates a coherent answer from whatever information is available
+3. Never refuses to generate a response
 
 User Question: ${question}
 
-Agreed Expert Responses:
+Expert Responses:
 ${formattedResponses}
 
-Please provide the synthesized response in the 'synthesizedResponse' field. Aim for clarity and completeness. Format using markdown where appropriate.`,
+If the question or responses don't make sense, create a polite, helpful response that works with what's available, without mentioning the quality of the inputs.
+
+Always return a complete response in the 'synthesizedResponse' field, formatted using markdown where appropriate.`,
       maxTokens: 1500, // Allow more tokens for synthesis
     });
 
@@ -149,6 +158,95 @@ Please provide the synthesized response in the 'synthesizedResponse' field. Aim 
   }
 }
 
+// Function to compute and store embeddings for expert answers
+async function computeAndStoreEmbeddings(assignments: ExpertAssignment[]): Promise<void> {
+  console.log(`[RAG:Embed] Computing embeddings for ${assignments.length} accepted answers...`);
+  console.time('[RAG:Embed] total-embedding-time');
+  
+  let successCount = 0;
+  let skipCount = 0;
+  let errorCount = 0;
+  let totalTokensUsed = 0;
+  
+  for (const assignment of assignments) {
+    try {
+      // Skip if no response or already has embedding
+      if (!assignment.response) {
+        console.log(`[RAG:Embed] Skipping assignment ${assignment.id}: No response`);
+        skipCount++;
+        continue;
+      }
+      
+      if (assignment.responseEmbedding) {
+        console.log(`[RAG:Embed] Skipping assignment ${assignment.id}: Already has embedding`);
+        skipCount++;
+        continue;
+      }
+      
+      // Get related expert request to include question in embedding context
+      console.time(`[RAG:Embed] request-fetch-time-${assignment.id}`);
+      const expertReq = await getExpertRequestById({ id: assignment.expertRequestId });
+      console.timeEnd(`[RAG:Embed] request-fetch-time-${assignment.id}`);
+      
+      if (!expertReq) {
+        console.warn(`[RAG:Embed] Could not find expert request ${assignment.expertRequestId} for embedding context`);
+        errorCount++;
+        continue;
+      }
+      
+      // Create combined text for better semantic matching
+      const contextText = `${expertReq.question} ${assignment.response}`;
+      console.log(`[RAG:Embed] Embedding context length for ${assignment.id}: ${contextText.length} characters`);
+      
+      // Generate embedding
+      console.time(`[RAG:Embed] embedding-generation-time-${assignment.id}`);
+      const { embedding, usage } = await embed({
+        model: myProvider.textEmbeddingModel('text-embedding-3-small'),
+        value: contextText,
+      });
+      console.timeEnd(`[RAG:Embed] embedding-generation-time-${assignment.id}`);
+      
+      if (!embedding) {
+        console.error(`[RAG:Embed] Failed to generate embedding for assignment ${assignment.id}`);
+        errorCount++;
+        continue;
+      }
+      
+      // Safely access usage data if available
+      const tokensUsed = typeof usage === 'object' ? 1 : 0; // Count as 1 if usage object exists
+      totalTokensUsed += tokensUsed;
+      
+      console.log(`[RAG:Embed] Generated embedding for assignment ${assignment.id}:`);
+      console.log(`[RAG:Embed] - Dimensions: ${embedding.length}`);
+      console.log(`[RAG:Embed] - Usage details: ${JSON.stringify(usage)}`);
+      
+      // Store embedding
+      console.time(`[RAG:Embed] db-store-time-${assignment.id}`);
+      await db
+        .update(expertAssignment)
+        .set({ responseEmbedding: embedding })
+        .where(eq(expertAssignment.id, assignment.id));
+      console.timeEnd(`[RAG:Embed] db-store-time-${assignment.id}`);
+      
+      console.log(`[RAG:Embed] Successfully stored embedding for assignment ${assignment.id}`);
+      successCount++;
+      
+    } catch (error) {
+      console.error(`[RAG:Embed] Error computing embedding for assignment ${assignment.id}:`, error);
+      errorCount++;
+      // Continue with other assignments even if one fails
+    }
+  }
+  
+  console.timeEnd('[RAG:Embed] total-embedding-time');
+  console.log(`[RAG:Embed] Embedding generation summary:`);
+  console.log(`[RAG:Embed] - Total assignments processed: ${assignments.length}`);
+  console.log(`[RAG:Embed] - Successful: ${successCount}`);
+  console.log(`[RAG:Embed] - Skipped: ${skipCount}`);
+  console.log(`[RAG:Embed] - Failed: ${errorCount}`);
+  console.log(`[RAG:Embed] - Total tokens used: ${totalTokensUsed}`);
+}
+
 interface ProcessExpertResponsesParams {
   expertRequestId: string;
 }
@@ -170,8 +268,8 @@ export async function processExpertResponses({
     
     // Don't re-process if already completed
     if (expertRequest.status === 'completed') {
-      console.log(`[${expertRequestId}] Request is already completed. Skipping.`);
-      return;
+      console.log(`[${expertRequestId}] Request is already completed. Reavaluate.`);
+      
     }
 
     // 2. Get all submitted assignments for this request
@@ -260,6 +358,12 @@ export async function processExpertResponses({
         try {
           await acceptSubmittedAssignmentsByRequestId({ expertRequestId });
           // Log inside the function already confirms count
+          
+          // Compute and store embeddings for accepted assignments
+          console.log(`[${expertRequestId}] Computing embeddings for accepted assignments...`);
+          // Use the submittedAssignments we already have since they're now accepted
+          await computeAndStoreEmbeddings(submittedAssignments);
+          
         } catch (acceptError) {
           console.error(`[${expertRequestId}] Failed to accept submitted assignments:`, acceptError);
           // Continue processing even if accepting fails, but log the error

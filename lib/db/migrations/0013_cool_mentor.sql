@@ -1,0 +1,1 @@
+ALTER TABLE "ExpertAssignment" ADD COLUMN "responseEmbedding" json DEFAULT 'null'::json;

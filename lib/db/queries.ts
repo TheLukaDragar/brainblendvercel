@@ -5,6 +5,8 @@ import { and, asc, desc, eq, gt, gte, inArray, lt, SQL, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { NextResponse } from 'next/server';
+import { embed, cosineSimilarity } from 'ai';
+import { myProvider } from '@/lib/ai/providers';
 
 import {
   user,
@@ -810,5 +812,164 @@ export const acceptSubmittedAssignmentsByRequestId = async ({
   } catch (error) {
     console.error(`[${expertRequestId}] Failed to update submitted assignments to 'accepted':`, error);
     throw error; // Re-throw the error after logging
+  }
+};
+
+interface GetRelevantExpertAnswersParams {
+  query: string;
+  limit?: number;
+  similarityThreshold?: number;
+}
+
+export const getRelevantExpertAnswers = async ({
+  query,
+  limit = 3,
+  similarityThreshold = 0.7,
+}: GetRelevantExpertAnswersParams) => {
+  try {
+    console.log(`[RAG:DB] Starting retrieval for query of length ${query.length} with similarity threshold ${similarityThreshold}`);
+    console.time('[RAG:DB] total-retrieval-time');
+    
+    // 1. Get all accepted expert assignments with their questions, responses, and embeddings
+    console.time('[RAG:DB] db-query-time');
+    const acceptedAssignments = await db
+      .select({
+        assignment: expertAssignment,
+        request: {
+          id: expertRequest.id,
+          question: expertRequest.question,
+        },
+      })
+      .from(expertAssignment)
+      .leftJoin(expertRequest, eq(expertAssignment.expertRequestId, expertRequest.id))
+      .where(eq(expertAssignment.status, 'accepted'));
+    console.timeEnd('[RAG:DB] db-query-time');
+
+    // If no accepted assignments, return empty array
+    if (!acceptedAssignments.length) {
+      console.log(`[RAG:DB] No accepted assignments found in database`);
+      console.timeEnd('[RAG:DB] total-retrieval-time');
+      return [];
+    }
+    
+    console.log(`[RAG:DB] Found ${acceptedAssignments.length} total accepted assignments to search through`);
+
+    // 2. Embed the user query
+    console.time('[RAG:DB] query-embedding-time');
+    const { embedding: queryEmbedding, usage } = await embed({
+      model: myProvider.textEmbeddingModel('text-embedding-3-small'),
+      value: query,
+    });
+    console.timeEnd('[RAG:DB] query-embedding-time');
+
+    if (!queryEmbedding) {
+      console.error(`[RAG:DB] Failed to generate query embedding`);
+      console.timeEnd('[RAG:DB] total-retrieval-time');
+      throw new Error('Failed to generate query embedding');
+    }
+
+    console.log(`[RAG:DB] Query embedding usage: ${JSON.stringify(usage)}`);
+    console.log(`[RAG:DB] Query embedding dimensions: ${queryEmbedding.length}`);
+
+    // 3. For each assignment, use pre-computed embedding if available, or compute it if necessary
+    console.time('[RAG:DB] similarity-calculation-time');
+    let precomputedEmbeddingCount = 0;
+    let computedOnFlyCount = 0;
+    
+    const assignmentsWithScores = await Promise.all(
+      acceptedAssignments.map(async (item) => {
+        try {
+          if (!item.request || !item.assignment || !item.assignment.response) return null;
+          
+          let contextEmbedding: number[] | null = null;
+          
+          // Use pre-computed embedding if available
+          if (item.assignment.responseEmbedding) {
+            contextEmbedding = item.assignment.responseEmbedding;
+            precomputedEmbeddingCount++;
+          } else {
+            // Otherwise compute it on the fly (fallback)
+            console.log(`[RAG:DB] No pre-computed embedding for assignment ${item.assignment.id}, computing now...`);
+            const contextText = `${item.request.question} ${item.assignment.response}`;
+            
+            const { embedding } = await embed({
+              model: myProvider.textEmbeddingModel('text-embedding-3-small'),
+              value: contextText,
+            });
+            
+            contextEmbedding = embedding;
+            computedOnFlyCount++;
+            
+            // Store the embedding for future use
+            if (embedding) {
+              try {
+                await db
+                  .update(expertAssignment)
+                  .set({ responseEmbedding: embedding })
+                  .where(eq(expertAssignment.id, item.assignment.id));
+                console.log(`[RAG:DB] Stored embedding for assignment ${item.assignment.id} for future use`);
+              } catch (storageError) {
+                console.error(`[RAG:DB] Error storing embedding for assignment ${item.assignment.id}:`, storageError);
+                // Continue even if storing fails
+              }
+            }
+          }
+          
+          if (!contextEmbedding) return null;
+          
+          const similarity = cosineSimilarity(queryEmbedding, contextEmbedding);
+          
+          return {
+            question: item.request.question,
+            answer: item.assignment.response,
+            similarity,
+            assignmentId: item.assignment.id
+          };
+        } catch (error) {
+          console.error('[RAG:DB] Error calculating similarity for assignment:', error);
+          return null;
+        }
+      })
+    );
+    console.timeEnd('[RAG:DB] similarity-calculation-time');
+    
+    console.log(`[RAG:DB] Embedding sources: ${precomputedEmbeddingCount} pre-computed, ${computedOnFlyCount} computed on-the-fly`);
+
+    // 4. Filter out null results and sort by similarity
+    const allScores = assignmentsWithScores
+      .filter((item): item is { question: string; answer: string; similarity: number; assignmentId: string } => 
+        item !== null && 
+        typeof item.answer === 'string' && 
+        item.answer.trim() !== ''
+      );
+    
+    console.log(`[RAG:DB] Valid assignments before threshold filtering: ${allScores.length}`);
+    
+    if (allScores.length > 0) {
+      // Log distribution of similarity scores
+      const maxSimilarity = Math.max(...allScores.map(a => a.similarity));
+      const minSimilarity = Math.min(...allScores.map(a => a.similarity));
+      const avgSimilarity = allScores.reduce((sum, a) => sum + a.similarity, 0) / allScores.length;
+      
+      console.log(`[RAG:DB] Similarity score distribution - Min: ${minSimilarity.toFixed(4)}, Max: ${maxSimilarity.toFixed(4)}, Avg: ${avgSimilarity.toFixed(4)}`);
+    }
+    
+    const validAssignments = allScores
+      .filter(item => item.similarity >= similarityThreshold)
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, limit);
+    
+    console.log(`[RAG:DB] Final retrieved answers: ${validAssignments.length} (after applying threshold ${similarityThreshold} and limit ${limit})`);
+    
+    // Log individual retrieved assignments with their similarity scores
+    validAssignments.forEach((item, index) => {
+      console.log(`[RAG:DB] Retrieved #${index + 1} - ID: ${item.assignmentId}, Similarity: ${item.similarity.toFixed(4)}`);
+    });
+    
+    console.timeEnd('[RAG:DB] total-retrieval-time');
+    return validAssignments;
+  } catch (error) {
+    console.error('[RAG:DB] Error retrieving relevant expert answers:', error);
+    return []; // Return empty array on error
   }
 };

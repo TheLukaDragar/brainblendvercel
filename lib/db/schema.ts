@@ -193,6 +193,7 @@ export const expertAssignment = pgTable('ExpertAssignment', {
   creditsAwarded: integer('creditsAwarded'),
   createdAt: timestamp('createdAt').notNull(),
   updatedAt: timestamp('updatedAt').notNull(),
+  responseEmbedding: json('responseEmbedding').$type<number[] | null>().default(null),
 });
 
 export type ExpertAssignment = InferSelectModel<typeof expertAssignment>;

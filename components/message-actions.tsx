@@ -47,9 +47,24 @@ export function PureMessageActions({
     .join('\n')
     .trim();
 
-  const containsSpecificText = textFromParts?.includes(
-    "Tega odgovora še ne poznam. Ali želite za odgovor povprašati skupnost?"
-  );
+  // More robust check for the specific text
+  const containsSpecificText = (() => {
+    if (!textFromParts) return false;
+    
+    // The exact text to look for
+    const targetText = "Tega odgovora še ne poznam. Ali želite za odgovor povprašati skupnost?";
+    
+    // Case-insensitive check
+    const normalizedText = textFromParts.toLowerCase();
+    const normalizedTarget = targetText.toLowerCase();
+    
+    // Direct match check
+    if (normalizedText.includes(normalizedTarget)) return true;
+    
+    // Alternative: Check for a key distinctive phrase that's less likely to change
+    const keyPhrase = "odgovora še ne poznam";
+    return normalizedText.includes(keyPhrase.toLowerCase());
+  })();
 
   // Function to handle asking community
   const handleAskCommunity = () => {

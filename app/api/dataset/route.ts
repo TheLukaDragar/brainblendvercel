@@ -24,7 +24,17 @@ export async function GET() {
     // Fetch all accepted expert assignments with their related requests and experts
     const acceptedAssignments = await db
       .select({
-        assignment: expertAssignment,
+        assignment: {
+          id: expertAssignment.id,
+          expertRequestId: expertAssignment.expertRequestId,
+          expertId: expertAssignment.expertId,
+          status: expertAssignment.status,
+          response: expertAssignment.response,
+          rating: expertAssignment.rating,
+          creditsAwarded: expertAssignment.creditsAwarded,
+          createdAt: expertAssignment.createdAt,
+          updatedAt: expertAssignment.updatedAt,
+        },
         request: {
           id: expertRequest.id,
           chatId: expertRequest.chatId,

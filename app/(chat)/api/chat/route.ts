@@ -19,6 +19,7 @@ import {
   assignExpertToRequest,
   getUser,
   getAllExperts,
+  getRelevantExpertAnswers,
 } from '@/lib/db/queries';
 import {
   generateUUID,
@@ -256,10 +257,80 @@ export async function POST(request: Request) {
 
     // Regular AI response flow
     return createDataStreamResponse({
-      execute: (dataStream) => {
+      execute: async (dataStream) => {
+        // Get the user's question text
+        let userQuestionText = '';
+        if (Array.isArray(userMessage.parts)) {
+          userQuestionText = userMessage.parts.map(part => {
+            if (typeof part === 'string') {
+              return part;
+            } else if (part && typeof part === 'object' && part.type === 'text') {
+              return (part as any).text || '';
+            }
+            return '';
+          }).join(' ').trim();
+        } else if (typeof userMessage.parts === 'string') {
+          userQuestionText = userMessage.parts;
+        }
+
+        // Create a variable for system prompt that might be enhanced with RAG context
+        let enhancedSystemPrompt = systemPrompt({ selectedChatModel });
+        
+        // Only attempt RAG for non-expert requests (since expert requests already go to humans)
+        if (!isExpertRequest && userQuestionText) {
+          try {
+            console.log(`[RAG] Starting retrieval for query: "${userQuestionText.substring(0, 100)}${userQuestionText.length > 100 ? '...' : ''}"`);
+            console.time('[RAG] retrieval-time');
+            
+            // Find relevant expert answers
+            const relevantAnswers = await getRelevantExpertAnswers({
+              query: userQuestionText,
+              limit: 3,
+              similarityThreshold: 0.7,
+            });
+            
+            console.timeEnd('[RAG] retrieval-time');
+            
+            // If relevant answers found, add them to the system prompt
+            if (relevantAnswers.length > 0) {
+              console.log(`[RAG] Found ${relevantAnswers.length} relevant expert answers for context enhancement`);
+              
+              // Log similarity scores for each retrieved answer
+              relevantAnswers.forEach((item, index) => {
+                console.log(`[RAG] Context #${index + 1} - Similarity: ${item.similarity.toFixed(4)}`);
+                console.log(`[RAG] Context #${index + 1} - Question: "${item.question.substring(0, 100)}${item.question.length > 100 ? '...' : ''}"`);
+                console.log(`[RAG] Context #${index + 1} - Answer length: ${item.answer.length} characters`);
+              });
+              
+              // Format the expert context
+              const expertContexts = relevantAnswers.map(item => (
+                `[EXPERT CONTEXT]
+Question: ${item.question}
+Answer: ${item.answer}
+[/EXPERT CONTEXT]`
+              )).join('\n\n');
+              
+              // Add expert contexts to the system prompt
+              enhancedSystemPrompt = `${enhancedSystemPrompt}\n\n${expertContexts}`;
+              
+              console.log(`[RAG] System prompt enhanced with ${relevantAnswers.length} context items`);
+              console.log(`[RAG] Final prompt length: ${enhancedSystemPrompt.length} characters`);
+            } else {
+              console.log(`[RAG] No relevant expert answers found above similarity threshold 0.7`);
+            }
+          } catch (error) {
+            console.error("[RAG] Error retrieving expert answers:", error);
+            // Continue without RAG context on error
+          }
+        } else if (isExpertRequest) {
+          console.log(`[RAG] Skipping for expert request`);
+        } else if (!userQuestionText) {
+          console.log(`[RAG] Skipping due to empty user question`);
+        }
+
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel }),
+          system: enhancedSystemPrompt,
           messages,
           maxSteps: 5,
           experimental_activeTools:
