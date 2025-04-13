@@ -68,7 +68,7 @@ export async function extractTagsFromUserMessage({
       model: myProvider.languageModel('tag-model'),
       system: `\n
     - you will generate a list of relevant expertise tags based on the user's message
-    - identify 3-5 most relevant expertise areas from the conversation
+    - identify 10-20 most relevant expertise areas from the conversation
     - return ONLY a valid JSON array of strings with no explanation
     - example: ["Web Development", "Machine Learning", "Cloud Computing"]
     - do not include tags that aren't in the predefined list`,
