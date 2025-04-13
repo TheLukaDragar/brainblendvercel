@@ -17,6 +17,7 @@ import { unstable_serialize } from 'swr/infinite';
 import { getChatHistoryPaginationKey } from './sidebar-history';
 import { ExpertRequestStatus } from './expert-request-status';
 import { ExpertResponse } from './expert-response';
+import { UsersIcon } from 'lucide-react';
 
 export function Chat({
   id,
@@ -82,25 +83,26 @@ export function Chat({
   return (
     <>
       <div className="flex flex-col min-w-0 h-dvh bg-background">
-        <div className="flex items-center">
-          <ChatHeader
-            chatId={id}
-            selectedModelId={selectedChatModel}
-            selectedVisibilityType={selectedVisibilityType}
-            isReadonly={isReadonly}
-          />
+        <div className={`flex items-center transition-colors duration-300 ${expertMode ? 'dark:bg-blue-900/20' : ''}`}>
+          <header className="flex sticky top-0 py-1.5 items-center px-2 md:px-2 gap-2">
+            <ChatHeader
+              chatId={id}
+              selectedModelId={selectedChatModel}
+              selectedVisibilityType={selectedVisibilityType}
+              isReadonly={isReadonly}
+            />
+          </header>
           {expertMode && (
-            <div className="bg-blue-500 text-white px-3 py-1 text-sm font-medium rounded-lg ml-3 flex items-center gap-1.5 shadow-md animate-in fade-in slide-in-from-right-5 duration-300 relative">
-              <div className="absolute inset-0 rounded-lg bg-blue-400 opacity-50 blur-sm -z-10"></div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-4 h-4 animate-pulse"
-              >
-                <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z" />
-              </svg>
-              Community Mode
+            <div className="flex-1 p-2 px-4 h-12 flex items-center transition-all duration-300">
+              <div className="max-w-3xl mx-auto flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                  <span className="text-sm text-white font-medium flex items-center gap-2">
+                    <UsersIcon size={14} className="text-blue-300" />
+                    Community Mode
+                  </span>
+                </div>
+              </div>
             </div>
           )}
         </div>

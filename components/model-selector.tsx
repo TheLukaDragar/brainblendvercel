@@ -59,9 +59,9 @@ export function ModelSelector({
               onSelect={() => {
                 setOpen(false);
 
-                startTransition(() => {
+                startTransition(async () => {
                   setOptimisticModelId(id);
-                  saveChatModelAsCookie(id);
+                  await saveChatModelAsCookie(id);
                 });
               }}
               data-active={id === optimisticModelId}

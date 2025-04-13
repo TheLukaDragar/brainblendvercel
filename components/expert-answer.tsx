@@ -315,14 +315,25 @@ export function ExpertAnswer({
 
   // Loading state
   if (isValidating && !expertAssignments) {
-    return (
-      <div className="flex flex-col min-w-0 h-dvh bg-background">
-        <ChatHeader
-          chatId={id}
-          selectedModelId={selectedChatModel}
-          selectedVisibilityType={selectedVisibilityType}
-          isReadonly={true}
-        />
+  return (
+      <div className="flex flex-col min-w-0 h-dvh">
+        <header className="flex sticky top-0 border-t border-b border-indigo-900 py-1.5 items-center px-2 md:px-2 gap-2">
+          <ChatHeader
+            chatId={id}
+            selectedModelId={selectedChatModel}
+            selectedVisibilityType={selectedVisibilityType}
+            isReadonly={true}
+          />
+          <div className="flex-1 p-4 px-4 h-16 flex items-center transition-colors duration-300">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+              <span className="text-sm text-white font-medium flex items-center gap-2">
+                <UsersIcon size={16} className="text-blue-300" />
+                Community Experts
+              </span>
+            </div>
+          </div>
+        </header>
         <div className="flex flex-col flex-1 items-center justify-center">
           <Spinner className="text-blue-600 mb-4" />
           <p className="text-sm text-blue-600/80 dark:text-blue-400/80">Loading expert assignment...</p>
@@ -336,25 +347,29 @@ export function ExpertAnswer({
 
   return (
     <div className="flex flex-col min-w-0 h-dvh bg-background">
-      <div className="flex items-center">
+      <header className="flex sticky top-0 border-t border-b border-indigo-900 py-1.5 items-center px-2 md:px-2 gap-2">
         <ChatHeader
           chatId={id}
           selectedModelId={selectedChatModel}
           selectedVisibilityType={selectedVisibilityType}
           isReadonly={true}
         />
-        <div className="bg-blue-500 text-white px-3 py-1 text-sm font-medium rounded-lg ml-3 flex items-center gap-1.5 shadow-md animate-in fade-in slide-in-from-right-5 duration-300 relative">
-          <div className="absolute inset-0 rounded-lg bg-blue-400 opacity-50 blur-sm -z-10"></div>
-          <UsersIcon className="w-4 h-4" />
-          Community Experts
+        <div className="flex-1 p-4 px-4 h-16 flex items-center transition-colors duration-300">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+            <span className="text-sm text-white font-medium flex items-center gap-2">
+              <UsersIcon size={16} className="text-blue-300" />
+              Community Experts
+            </span>
+          </div>
         </div>
-      </div>
+      </header>
 
-      <ExpertRequestStatus chatId={id} />
+        <ExpertRequestStatus chatId={id} />
 
       <style jsx global>{customAnimationStyles}</style>
       {/* Status bar - dark background version like in screenshot */}
-      <div className="bg-indigo-950 border-t border-b border-indigo-900 p-4 px-4 sticky top-0 z-20 h-16 flex items-center transition-colors duration-300">
+      <div className="dark:bg-blue-900/20 border-t border-b border-indigo-900 p-4 px-4 sticky top-0 z-20 h-16 flex items-center transition-colors duration-300">
         <div className="max-w-3xl mx-auto flex items-center justify-between w-full">
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full transition-colors duration-300 ${
@@ -486,9 +501,9 @@ export function ExpertAnswer({
                     <div className="whitespace-pre-wrap">{userQuestion}</div>
                   </div>
                 </div>
-              </div>
             </div>
-
+          </div>
+          
             {/* Expert response (if submitted) - positioned at right */}
             {currentAssignment && ['submitted', 'accepted', 'rejected'].includes(currentAssignment.assignment.status) && (
               <div className="w-full mx-auto max-w-3xl px-4 group/message" data-role="expert">
@@ -531,7 +546,7 @@ export function ExpertAnswer({
       {/* Quality assessment display */}
       {assessment && showAssessment && (
         <div className="px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border-t border-b border-slate-200 dark:border-slate-800">
-          <div className="max-w-3xl mx-auto">
+            <div className="max-w-3xl mx-auto">
             <div className="flex items-start gap-4">
               <div className="size-8 flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
                 <SparklesIcon size={14} className="text-blue-600 dark:text-blue-400" />
@@ -631,7 +646,7 @@ export function ExpertAnswer({
                   {isLoading ? <Loader2Icon className="h-5 w-5 animate-spin mr-2" /> : <UsersIcon className="h-5 w-5 mr-2" />}
                   Start Working on This Request
                 </Button>
-              </div>
+      </div>
             ) : (
               <div className="relative w-full flex flex-col gap-4">
                 <Textarea
