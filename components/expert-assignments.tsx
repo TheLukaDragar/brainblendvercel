@@ -1,7 +1,7 @@
 'use client';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/utils';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Button } from './ui/button';
 import { useState, useEffect } from 'react';
 import { ChevronDownIcon, ChevronRightIcon, UsersIcon, MessageCircleIcon, CheckIcon, XIcon, ClockIcon } from 'lucide-react';
@@ -209,6 +209,10 @@ function AssignmentItem({
   request: ExpertAssignmentWithRequest['request'];
   onClick: () => void;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const isSelected = pathname === `/answer/${request.chatId}`;
+
   // Format the request creation date to a readable format
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -282,12 +286,16 @@ function AssignmentItem({
   const completedCount = request.completedExpertsCount || 0;
   const totalExperts = request.assignedExpertsCount || 0;
   const completionText = totalExperts > 0 
-    ? `${completedCount}/${totalExperts} completed` 
-    : 'No experts assigned';
+    ? `${completedCount}/${totalExperts} answered` 
+    : 'No experts answered';
 
   return (
     <div 
-      className="px-3 py-3 cursor-pointer text-sm rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border border-transparent hover:border-blue-200 dark:hover:border-blue-800"
+      className={`px-3 py-3 cursor-pointer text-sm rounded-md transition-all duration-100 ease-in-out border ${
+        isSelected 
+          ? 'bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-700 scale-[1.01]' 
+          : 'border-transparent hover:border-purple-200 dark:hover:border-purple-800 hover:scale-[1.01]'
+      }`}
       onClick={onClick}
     >
       <div className="flex flex-col gap-3">
@@ -313,7 +321,7 @@ function AssignmentItem({
           {totalExperts > 0 && (
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-1">
               <div 
-                className="bg-blue-500 h-1.5 rounded-full" 
+                className="bg-purple-500 h-1.5 rounded-full" 
                 style={{ width: `${(completedCount / totalExperts) * 100}%` }}
               ></div>
             </div>
