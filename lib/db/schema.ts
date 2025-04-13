@@ -20,6 +20,7 @@ export const user = pgTable('User', {
   expertiseTags: json('expertiseTags').$type<string[]>().default([]),
   expertiseTagsEmbedding: json('expertiseTagsEmbedding').$type<number[] | null>().default(null),
   credits: integer('credits').default(0).notNull(),
+  xp: integer('xp').default(0).notNull(),
 });
 
 export type User = InferSelectModel<typeof user>;
