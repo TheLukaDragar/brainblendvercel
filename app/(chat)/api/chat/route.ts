@@ -227,32 +227,8 @@ export async function POST(request: Request) {
       }
        // --- End Semantic Matching Logic ---
 
-      // Return a response that indicates an expert request was created
-      return createDataStreamResponse({
-        execute: (dataStream) => {
-          const expertResponseMessage = {
-            role: 'assistant' as const,
-            content: `Your question has been sent to ${assignedExperts} community expert(s). You'll be notified when they respond.`,
-          };
-          
-          const result = streamText({
-            model: myProvider.languageModel(selectedChatModel),
-            system: systemPrompt({ selectedChatModel }),
-            messages: [...messages, expertResponseMessage],
-            maxSteps: 1,
-            experimental_transform: smoothStream({ chunking: 'word' }),
-            experimental_generateMessageId: generateUUID,
-          });
-
-          result.consumeStream();
-          result.mergeIntoDataStream(dataStream, {
-            sendReasoning: false,
-          });
-        },
-        onError: () => {
-          return 'Oops, an error occurred while sending your question to experts!';
-        },
-      });
+      // Return an empty response for expert requests
+      return new Response(null, { status: 200 });
     }
 
     // Regular AI response flow
