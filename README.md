@@ -1,3 +1,7 @@
+## Has it ever happened to you?
+
+Has it ever happened to you that at university, at work, or somewhere else, you faced a problem or a question you didn’t know the answer to? You probably asked a colleague, classmate, or someone else, got a response, solved the issue – and moved on.
+
 Then, months or even years later, the same problem came up again, but you couldn’t remember the answer. You hadn’t saved it, and searching through old emails or chat messages was time-consuming and often unsuccessful.
 
 ## So how can we solve this?
