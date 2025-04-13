@@ -5,6 +5,7 @@ import {
 } from 'ai';
 import { xai } from '@ai-sdk/xai';
 import { createOpenAI } from '@ai-sdk/openai';
+import { google } from '@ai-sdk/google';
 
 
 import { isTestEnvironment } from '../constants';
@@ -66,10 +67,10 @@ export const myProvider = isTestEnvironment
       languageModels: {
         'chat-model': xai('grok-2-1212'),
         'chat-model-reasoning': xai('grok-3-mini-beta'),
-        'title-model': xai('grok-2-1212'),
-        'artifact-model': xai('grok-2-1212'),
-        'tag-model': xai('grok-2-1212'),
-        'expert-consensus-synthesis-model': xai('grok-2-1212'),
+        'title-model': google('gemini-2.0-flash'),
+        'artifact-model': google('gemini-2.0-flash'),
+        'tag-model': google('gemini-2.0-flash'),
+        'expert-consensus-synthesis-model': google('gemini-2.0-flash'),
       },
       textEmbeddingModels: {
         'text-embedding-3-small': openai_api.embedding('text-embedding-3-small'),
