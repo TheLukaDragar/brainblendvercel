@@ -376,25 +376,27 @@ export function ExpertAnswer({
         />
       )}
 
-      <div className="flex items-center">
-        <ChatHeader
-          chatId={id}
-          selectedModelId={selectedChatModel}
-          selectedVisibilityType={selectedVisibilityType}
-          isReadonly={true}
-        />
-        <div className="flex-1 p-4 px-4 h-16 flex items-center transition-colors duration-300">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-            <span className="text-sm text-white font-medium flex items-center gap-2">
-              <UsersIcon size={16} className="text-blue-300" />
-              Community Experts
-            </span>
+      <header>
+        <div className="flex items-center">
+          <ChatHeader
+            chatId={id}
+            selectedModelId={selectedChatModel}
+            selectedVisibilityType={selectedVisibilityType}
+            isReadonly={true}
+          />
+          <div className="flex-1 p-4 px-4 h-16 flex items-center transition-colors duration-300">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+              <span className="text-sm text-white font-medium flex items-center gap-2">
+                <UsersIcon size={16} className="text-blue-300" />
+                Community Experts
+              </span>
+            </div>
           </div>
         </div>
       </header>
 
-        <ExpertRequestStatus chatId={id} />
+      <ExpertRequestStatus chatId={id} />
 
       <style jsx global>{customAnimationStyles}</style>
       {/* Status bar - dark background version like in screenshot */}
