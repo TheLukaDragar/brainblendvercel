@@ -20,6 +20,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
   const [extractedTags, setExtractedTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
+  const [credits, setCredits] = useState<number>(0);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -32,6 +33,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
         const userData = await response.json();
         setExpertise(userData.expertise || '');
         setExtractedTags(userData.expertiseTags || []);
+        setCredits(userData.credits || 0);
       } catch (error) {
         console.error('Error fetching user data:', error);
         toast.error('Failed to load profile data');
@@ -110,6 +112,15 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
   return (
     <div className="space-y-8 h-full flex flex-col">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+          <div>
+            <h2 className="text-xl font-semibold">Your Credits</h2>
+            <p className="text-sm text-muted-foreground">Available credits for generating content</p>
+          </div>
+          <div className="text-2xl font-bold">{credits}</div>
+        </div>
+      </div>
       <div className="space-y-4 flex-grow">
         <div className="space-y-2">
           <h2 className="text-xl font-semibold">Your Expertise</h2>
