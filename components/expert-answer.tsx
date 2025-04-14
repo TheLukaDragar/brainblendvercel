@@ -207,11 +207,10 @@ export function ExpertAnswer({
       // Show confetti, success message, and modal
       setShowConfetti(true);
       toast.success(`Your expert response has been submitted! You earned 1 credit!`);
-      setShowThankYouModal(true);
+      setTimeout(() => setShowThankYouModal(true), 3000);
       setTimeout(() => setShowConfetti(false), 6000);
 
       // Reset assessment display
-      setShowAssessment(false);
       // Refresh data
       const controller = new AbortController();
       setTimeout(() => controller.abort(), 5000);

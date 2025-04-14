@@ -21,7 +21,7 @@ function PureSuggestedActions({ chatId, append, expertMode }: SuggestedActionsPr
     {
       title: 'Write code to',
       label: `demonstrate Dijkstra's algorithm`,
-      action: `Write code to demonstrate Dijkstra's algorithm`,
+      action: `Write code to demonstrate algorithm`,
     },
     {
       title: 'Help me write an essay',

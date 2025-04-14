@@ -24,7 +24,7 @@ const local_nemotron = openaiClient.chat('nemotron');
 
 
 const openai_api = createOpenAI({
-  apiKey: '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',
+  apiKey: process.env.OPENAI_API_KEY,
   baseURL: 'https://api.openai.com/v1',
   compatibility: 'strict', // strict mode, enable when using the OpenAI API
 });

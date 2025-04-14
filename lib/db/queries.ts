@@ -823,7 +823,7 @@ interface GetRelevantExpertAnswersParams {
 export const getRelevantExpertAnswers = async ({
   query,
   limit = 3,
-  similarityThreshold = 0.7,
+  similarityThreshold = 0.5,
 }: GetRelevantExpertAnswersParams) => {
   try {
     console.log(`[RAG:DB] Starting retrieval for query of length ${query.length} with similarity threshold ${similarityThreshold}`);

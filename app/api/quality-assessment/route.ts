@@ -183,7 +183,7 @@ Finally, provide an overall score out of 100 and suggest 1-3 ways the response c
       }
       
       // Calculate if it passes the threshold (70/100)
-      finalAssessment.passesThreshold = finalAssessment.overall.score >= 50;
+      finalAssessment.passesThreshold = finalAssessment.overall.score >= 60;
       
       return new Response(JSON.stringify(finalAssessment), {
         headers: { 'Content-Type': 'application/json' },

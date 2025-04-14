@@ -90,11 +90,11 @@ const PureChatItem = ({
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={isActive}>
         <Link href={`/chat/${chat.id}`} onClick={() => setOpenMobile(false)}>
-          <div className="flex items-center justify-between w-full">
-            <span>{chat.title}</span>
+          <div className="flex items-center justify-between w-full px-1 py-0.5">
+            <span className="truncate max-w-[180px]">{chat.title}</span>
             {communityStatus && (
               <div 
-                className={`h-1.5 w-1.5 rounded-full ml-2 shadow-sm ${getStatusColor(communityStatus)}`} 
+                className={`h-1.5 w-1.5 rounded-full ml-2 flex-shrink-0 shadow-sm ${getStatusColor(communityStatus)}`} 
                 title={`Community chat: ${communityStatus.replace('_', ' ')}`}
               />
             )}
